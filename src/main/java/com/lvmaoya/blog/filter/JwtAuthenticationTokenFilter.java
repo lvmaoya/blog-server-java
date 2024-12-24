@@ -1,10 +1,13 @@
 package com.lvmaoya.blog.filter;
 
+import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
+import com.lvmaoya.blog.utils.JsonUtil;
 import com.lvmaoya.blog.utils.JwtUtil;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
 import com.lvmaoya.blog.utils.WebUtil;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -48,9 +51,10 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             claims = JwtUtil.getAllClaimsFromToken(authorization);
         }catch (Exception e){
             logger.error("Failed to parse token: ", e);
+            Result<Object> fail = Result.fail(HttpServletResponse.SC_FORBIDDEN,e.getMessage());
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().print(JsonUtil.toJsonString(fail));
             // token 超时、非法
-            // 响应给前端
-            WebUtil.renderString(response,"token不合法");
             return;
         }
         String userId = claims.getSubject();

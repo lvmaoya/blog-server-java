@@ -11,7 +11,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -20,6 +23,10 @@ public class SecurityConfig {
 
     @Resource
     private JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter;
+    @Resource
+    private AccessDeniedHandler accessDeniedHandler;
+    @Resource
+    private AuthenticationEntryPoint authenticationEntryPoint;
 
     /**
      * 配置密码加密方式
@@ -48,11 +55,14 @@ public class SecurityConfig {
                             .requestMatchers("/login").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/blog/list").permitAll()
                             .anyRequest().authenticated())//其它所有请求需要认证访问
-                    .csrf(AbstractHttpConfigurer::disable);//防止跨域伪造
+                    .csrf(AbstractHttpConfigurer::disable)//防止跨域伪造
+                    .logout(AbstractHttpConfigurer::disable);// 禁用 Spring Security 的默认注销功能
 
+            // 配置认证失败的处理器
+            http.exceptionHandling(httpSecurityExceptionHandlingConfigurer -> httpSecurityExceptionHandlingConfigurer.accessDeniedHandler(accessDeniedHandler).authenticationEntryPoint(authenticationEntryPoint));
+
+            // 把jwtAuthenticationTokenFilter添加到SpringSecurity的过滤器中
             http.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
             return http.build();
-        }
-
-
+    }
 }

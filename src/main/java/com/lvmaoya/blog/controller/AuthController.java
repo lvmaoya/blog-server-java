@@ -6,6 +6,7 @@ import com.lvmaoya.blog.domain.entity.LoginUser;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
 import com.lvmaoya.blog.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public Result<LoginUserVo> login(@RequestBody User user) {
+        if (!StringUtils.hasText(user.getName())){
+            throw new IllegalArgumentException();
+        }
         return authService.login(user.getName(), user.getPassword());
     }
 }
