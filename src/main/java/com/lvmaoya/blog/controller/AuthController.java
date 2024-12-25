@@ -7,6 +7,7 @@ import com.lvmaoya.blog.domain.vo.LoginUserVo;
 import com.lvmaoya.blog.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,5 +24,10 @@ public class AuthController {
             throw new IllegalArgumentException();
         }
         return authService.login(user.getName(), user.getPassword());
+    }
+
+    @GetMapping("/logout")
+    public Result<Object> logout() {
+        return authService.logout();
     }
 }

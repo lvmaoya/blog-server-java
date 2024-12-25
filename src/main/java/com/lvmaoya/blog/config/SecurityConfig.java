@@ -53,7 +53,7 @@ public class SecurityConfig {
             http.sessionManagement(session -> session.maximumSessions(1).maxSessionsPreventsLogin(true))
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers("/login").permitAll()//登录和未登录的人都可以访问
-                            .requestMatchers("/blog/list").permitAll()
+                            .requestMatchers("/logout").authenticated()
                             .anyRequest().authenticated())//其它所有请求需要认证访问
                     .csrf(AbstractHttpConfigurer::disable)//防止跨域伪造
                     .logout(AbstractHttpConfigurer::disable);// 禁用 Spring Security 的默认注销功能

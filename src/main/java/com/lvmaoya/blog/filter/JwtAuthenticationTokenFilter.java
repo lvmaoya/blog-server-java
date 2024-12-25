@@ -51,9 +51,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             claims = JwtUtil.getAllClaimsFromToken(authorization);
         }catch (Exception e){
             logger.error("Failed to parse token: ", e);
-            Result<Object> fail = Result.fail(HttpServletResponse.SC_FORBIDDEN,e.getMessage());
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.getWriter().print(JsonUtil.toJsonString(fail));
+            WebUtil.renderForbidden(response);
             // token 超时、非法
             return;
         }
@@ -65,12 +63,13 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
         // 如何没有这个用户，说明登录过期，提示重新登录
         if(Objects.isNull(loginUser)){
-            WebUtil.renderString(response,"登录过期");
+           WebUtil.renderForbidden(response);
+            // token 超时、非法
             return;
         }
 
         //存入SecurityContextHolder中
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userId, null, null);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(loginUser, null, null);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         // 放行
         filterChain.doFilter(request, response);

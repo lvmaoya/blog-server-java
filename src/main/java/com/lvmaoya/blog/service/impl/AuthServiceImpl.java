@@ -10,24 +10,28 @@ import com.lvmaoya.blog.utils.BeanCopyUtil;
 import com.lvmaoya.blog.utils.JwtUtil;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
+@Slf4j
 @Service
 public class AuthServiceImpl implements AuthService {
 
     @Resource
     UserMapper userMapper;
 
-    @Autowired
+    @Resource
     private AuthenticationManager authenticationManager;
 
-    @Autowired
+    @Resource
     RedisCacheUtil redisCacheUtil;
 
     @Override
@@ -61,5 +65,17 @@ public class AuthServiceImpl implements AuthService {
         //把token和user封装、返回
 
         return Result.success(loginUserVo);
+    }
+
+    @Override
+    public Result<Object> logout() {
+        // 解析token获取到用户
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        LoginUserVo user = (LoginUserVo)authentication.getPrincipal();
+        Long id = user.getUser().getId();
+
+        // 删除redis登录
+        redisCacheUtil.delete("blogLogin"+id);
+        return Result.success("登出成功");
     }
 }
