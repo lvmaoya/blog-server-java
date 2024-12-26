@@ -30,12 +30,18 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     private CategoryService categoryService;
 
     @Override
-    public Result<IPage<BlogVo>> blogList(Integer page, Integer size,Integer status, Integer top) {
+    public Result<IPage<BlogVo>> blogList(Integer page, Integer size, Blog blog, String sortBy) {
+        page = page == null ? 1 : page;
+        size = size == null ? 10 : size;
 
         LambdaQueryWrapper<Blog> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.orderByAsc(Blog::getPublishedTime);
-        queryWrapper.orderByAsc(Blog::getTop);
-        queryWrapper.eq(Objects.nonNull(status), Blog::getStatus, status);
+        // 排序：默认根据时间排序
+        if (Objects.nonNull(sortBy)) {
+            queryWrapper.orderByAsc(Blog::getPublishedTime);
+        }
+//        queryWrapper.orderByAsc(Blog::getPublishedTime);
+//        queryWrapper.orderByAsc(Blog::getTop);
+//        queryWrapper.eq(Objects.nonNull(status), Blog::getStatus, status);
 
         Page<Blog> pageObj = new Page<>(page, size);
         List<Blog> blogList = blogMapper.selectList(pageObj, queryWrapper);
@@ -43,9 +49,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
 
         List<BlogVo> blogVos = BeanCopyUtil.copyBeanList(blogList, BlogVo.class);
-        for (BlogVo blog : blogVos) {
-            Category category = categoryService.getById(blog.getCategoryId());
-            blog.setCategory(category);
+        for (BlogVo item : blogVos) {
+            Category category = categoryService.getById(item.getCategoryId());
+            item.setCategory(category);
         }
 
         //使用stream实现
