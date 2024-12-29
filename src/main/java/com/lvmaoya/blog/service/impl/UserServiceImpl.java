@@ -2,7 +2,6 @@ package com.lvmaoya.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.entity.User;
 import com.lvmaoya.blog.domain.vo.UserVo;
 import com.lvmaoya.blog.mapper.UserMapper;
@@ -20,8 +19,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private UserMapper userMapper;
 
     @Override
-    public Result<List<UserVo>> userList(QueryWrapper<User> wrapper) {
+    public List<UserVo> userList(QueryWrapper<User> wrapper) {
         List<User> users = userMapper.selectList(wrapper);
-        return Result.success(BeanCopyUtil.copyBeanList(users,UserVo.class));
+        return BeanCopyUtil.copyBeanList(users,UserVo.class);
     }
 }

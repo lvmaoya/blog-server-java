@@ -1,7 +1,6 @@
 package com.lvmaoya.blog.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Category;
 import com.lvmaoya.blog.mapper.BlogMapper;
@@ -21,14 +20,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     @Resource
     private BlogMapper blogMapper;
     @Override
-    public Result<List<Category>> getCategoryList() {
+    public List<Category> getCategoryList() {
         List<Blog> blogList = blogMapper.selectList(null);
         Set<String> longStream = blogList.stream().map(Blog::getCategoryId).collect(Collectors.toSet());
 
         List<Category> categories = listByIds(longStream);
 
-        List<Category> collect = categories.stream().filter(category -> "2".equals(category.getFatherCategoryName())).collect(Collectors.toList());
-
-        return Result.success(collect);
+        return categories.stream().filter(category -> "2".equals(category.getFatherCategoryName())).collect(Collectors.toList());
     }
 }

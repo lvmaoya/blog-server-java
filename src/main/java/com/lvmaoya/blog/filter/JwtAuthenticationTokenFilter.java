@@ -1,13 +1,10 @@
 package com.lvmaoya.blog.filter;
 
-import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
-import com.lvmaoya.blog.utils.JsonUtil;
 import com.lvmaoya.blog.utils.JwtUtil;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
 import com.lvmaoya.blog.utils.WebUtil;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Objects;
 
 // spring security认证过滤器

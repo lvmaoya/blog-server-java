@@ -1,6 +1,5 @@
 package com.lvmaoya.blog.service.impl;
 
-import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.entity.LoginUser;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
 import com.lvmaoya.blog.domain.vo.UserVo;
@@ -10,9 +9,7 @@ import com.lvmaoya.blog.utils.BeanCopyUtil;
 import com.lvmaoya.blog.utils.JwtUtil;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
     RedisCacheUtil redisCacheUtil;
 
     @Override
-    public Result<LoginUserVo> login(String username, String password) {
+    public LoginUserVo login(String username, String password) {
 
 
 
@@ -64,11 +61,11 @@ public class AuthServiceImpl implements AuthService {
 
         //把token和user封装、返回
 
-        return Result.success(loginUserVo);
+        return loginUserVo;
     }
 
     @Override
-    public Result<Object> logout() {
+    public Object logout() {
         // 解析token获取到用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         LoginUserVo user = (LoginUserVo)authentication.getPrincipal();
@@ -76,6 +73,6 @@ public class AuthServiceImpl implements AuthService {
 
         // 删除redis登录
         redisCacheUtil.delete("blogLogin"+id);
-        return Result.success("登出成功");
+        return "success";
     }
 }

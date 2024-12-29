@@ -1,6 +1,5 @@
 package com.lvmaoya.blog.controller;
 
-import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.vo.UserVo;
 import com.lvmaoya.blog.service.UserService;
 import jakarta.annotation.Resource;
@@ -18,7 +17,7 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("list")
-    public Result<List<UserVo>> getUsers() {
+    public List<UserVo> getUsers() {
         return userService.userList(null);
     }
 

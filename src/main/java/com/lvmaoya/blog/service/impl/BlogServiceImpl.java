@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.BlogContent;
 import com.lvmaoya.blog.domain.entity.Category;
@@ -18,13 +17,10 @@ import com.lvmaoya.blog.utils.BeanCopyUtil;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Array;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
@@ -36,7 +32,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     private CategoryService categoryService;
 
     @Override
-    public Result<IPage<BlogVo>> blogList(BlogListSearchParams blogListSearchParams) {
+    public IPage<BlogVo> blogList(BlogListSearchParams blogListSearchParams) {
         int page = blogListSearchParams.getPage() == null ? 1 : blogListSearchParams.getPage();
         int size = blogListSearchParams.getSize() == null ? 10 : blogListSearchParams.getSize();
         String sortBy = blogListSearchParams.getSortBy();
@@ -88,14 +84,46 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         pageVo.setPages(pageObj.getPages());
         pageVo.setCurrent(pageObj.getCurrent());
 
-        return Result.success(pageVo);
+        return pageVo;
     };
 
-    public Result<BlogVo> getBlogById(String id) {
+    public BlogVo getBlogById(String id) {
         Blog blog = blogMapper.selectById(id);
+        if(blog == null){
+            return null;
+        }
         BlogContent blogContent = blogContentMapper.selectById(id);
         BlogVo blogVo = BeanCopyUtil.copyBean(blog, BlogVo.class);
-        blogVo.setContent(blogContent.getContent());
-        return Result.success(blogVo);
+        if(blogContent != null){
+            blogVo.setContent(blogContent.getContent());
+        }
+        return blogVo;
+    }
+
+    @Override
+    public boolean removeById(String id) {
+        blogMapper.deleteById(id);
+        return true;
+    }
+
+    @Transactional
+    @Override
+    public boolean saveOrUpdate(BlogVo blogVo) {
+        Blog blog = BeanCopyUtil.copyBean(blogVo, Blog.class);
+
+        int res;
+        if (blogVo.getId() == null) {
+            blogMapper.insert(blog);
+            // 获取插入后的文章id
+            String id = blog.getId();
+            BlogContent blogContent = new BlogContent(id, blogVo.getContent());
+            res = blogContentMapper.insert(blogContent);
+        }else {
+            blogMapper.updateById(blog);
+            String id = blog.getId();
+            BlogContent blogContent = new BlogContent(id, blogVo.getContent());
+            res = blogContentMapper.updateById(blogContent);
+        }
+        return res > 0;
     }
 }

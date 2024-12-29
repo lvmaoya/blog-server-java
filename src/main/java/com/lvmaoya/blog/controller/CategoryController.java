@@ -1,6 +1,5 @@
 package com.lvmaoya.blog.controller;
 
-import com.lvmaoya.blog.domain.Result;
 import com.lvmaoya.blog.domain.entity.Category;
 import com.lvmaoya.blog.service.CategoryService;
 import jakarta.annotation.Resource;
@@ -19,7 +18,7 @@ public class CategoryController {
     CategoryService categoryService;
 
     @GetMapping("/list")
-    public Result<List<Category>> getCategoryList() {
+    public List<Category> getCategoryList() {
         return categoryService.getCategoryList();
     }
 
