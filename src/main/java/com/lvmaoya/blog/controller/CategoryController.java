@@ -3,9 +3,7 @@ package com.lvmaoya.blog.controller;
 import com.lvmaoya.blog.domain.entity.Category;
 import com.lvmaoya.blog.service.CategoryService;
 import jakarta.annotation.Resource;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,7 +17,16 @@ public class CategoryController {
 
     @GetMapping("/list")
     public List<Category> getCategoryList() {
-        return categoryService.getCategoryList();
+        return categoryService.list();
     }
 
+    @PostMapping
+    public boolean addCategory(@RequestBody Category category) {
+        return categoryService.saveOrUpdate(category);
+    }
+
+    @DeleteMapping("/{id}")
+    public boolean deleteCategory(@PathVariable String id) {
+        return categoryService.removeById(id);
+    }
 }

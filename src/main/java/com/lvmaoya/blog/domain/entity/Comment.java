@@ -9,10 +9,19 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 import java.util.Date;
 
 @Data
-public class Category {
+public class Comment {
     private String id;
-    private String categoryName;
-    private String fatherCategoryName;
+    private String articleId;
+    private int type;
+    private String rootId;
+    private String toUserId;
+    private String toUserName;
+    private String avatar;
+    private String userName;
+    private String email;
+    private String content;
+    private int status;
+    private int preferNumber;
     private int deleted;
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
