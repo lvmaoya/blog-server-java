@@ -2,13 +2,14 @@ package com.lvmaoya.blog.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
-import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.util.Date;
 
 @Data
+@TableName("commentary")
 public class Comment {
     private String id;
     private String articleId;
