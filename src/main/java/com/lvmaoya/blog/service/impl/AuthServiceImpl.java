@@ -1,5 +1,7 @@
 package com.lvmaoya.blog.service.impl;
 
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.LineCaptcha;
 import com.lvmaoya.blog.domain.entity.LoginUser;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
 import com.lvmaoya.blog.domain.vo.UserVo;
@@ -9,6 +11,9 @@ import com.lvmaoya.blog.utils.BeanCopyUtil;
 import com.lvmaoya.blog.utils.JwtUtil;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
 import jakarta.annotation.Resource;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Objects;
 
 @Slf4j
@@ -74,5 +80,35 @@ public class AuthServiceImpl implements AuthService {
         // 删除redis登录
         redisCacheUtil.delete("blogLogin"+id);
         return "success";
+    }
+
+    @Override
+    public void getCaptcha(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // 定义图形验证码的宽、高、验证码字符数、干扰线的条数
+        LineCaptcha lineCaptcha = CaptchaUtil.createLineCaptcha(100, 30, 4, 20);
+
+
+        // 获取验证码中的文本
+        String code = lineCaptcha.getCode();
+
+
+        // 将验证码存储在会话中，用于后续验证
+        request.getSession().setAttribute("captcha", code);
+
+
+        // 设置响应的内容类型为图片
+        response.setContentType("image/png");
+
+
+        // 获取输出流
+        ServletOutputStream outputStream = response.getOutputStream();
+
+
+        // 将验证码写出到输出流
+        lineCaptcha.write(outputStream);
+
+
+        // 关闭输出流
+        outputStream.close();
     }
 }
