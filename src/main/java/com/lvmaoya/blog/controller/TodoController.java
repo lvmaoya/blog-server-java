@@ -15,9 +15,8 @@ public class TodoController {
     private TodoService todoService;
 
     @GetMapping("/list")
-    public List<Todo> getTodoList(HttpServletRequest request){
-        System.out.println(request);
-       return todoService.list();
+    public List<Todo> getTodoList(@RequestParam(required = false) String sortBy){
+       return todoService.getTodoList(sortBy);
     }
 
     @PostMapping

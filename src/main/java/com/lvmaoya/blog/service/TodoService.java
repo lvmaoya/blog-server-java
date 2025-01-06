@@ -4,5 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.lvmaoya.blog.domain.entity.Todo;
 import com.lvmaoya.blog.domain.entity.User;
 
+import java.util.List;
+
 public interface TodoService  extends IService<Todo> {
+    List<Todo> getTodoList(String sortBy);
 }
