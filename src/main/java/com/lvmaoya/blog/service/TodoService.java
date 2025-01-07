@@ -8,4 +8,8 @@ import java.util.List;
 
 public interface TodoService  extends IService<Todo> {
     List<Todo> getTodoList(String sortBy);
+
+    List<Todo> getCurrentTodoList();
+
+    Boolean order(Integer id, Integer prevId);
 }

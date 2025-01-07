@@ -24,4 +24,13 @@ public class TodoController {
        return todoService.saveOrUpdate(todo);
     }
 
+    @GetMapping
+    public List<Todo> getCurrentTodo(){
+        return todoService.getCurrentTodoList();
+    }
+
+    @PostMapping("/order/{id}")
+    public Boolean order(@RequestParam Integer prevId,@PathVariable Integer id){
+        return todoService.order(id,prevId);
+    }
 }

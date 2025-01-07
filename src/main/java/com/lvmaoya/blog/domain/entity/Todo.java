@@ -16,6 +16,8 @@ public class Todo {
     private String priority;
     private String category;
     private String assignee;
+    private int prevId;
+    private int siblingId;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date dueDate;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
