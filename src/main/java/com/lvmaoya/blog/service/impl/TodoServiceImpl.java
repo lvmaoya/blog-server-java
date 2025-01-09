@@ -8,15 +8,16 @@ import com.lvmaoya.blog.domain.entity.Todo;
 import com.lvmaoya.blog.mapper.TodoMapper;
 import com.lvmaoya.blog.service.TodoService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 @Service
+@Slf4j
 public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements TodoService {
 
     @Resource
@@ -33,68 +34,82 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
 
     @Override
     public List<Todo> getCurrentTodoList() {
-        List<Todo> todos = todoMapper.selectList(null);
-        Collections.sort(todos, new Comparator<Todo>() {
-            @Override
-            public int compare(Todo t1, Todo t2) {
-                int prevIdCompare = Integer.compare(t1.getPrevId(), t2.getPrevId());
-                return prevIdCompare;
-            }
-        });
-        return todos;
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
+
+        List<Todo> todos = baseMapper.selectList(new LambdaQueryWrapper<Todo>()
+                .like(Todo::getCreatedTime, today));
+
+        // 构建 id 到 Todo 的映射
+        Map<Integer, Todo> todoMap = new HashMap<>();
+        for (Todo todo : todos) {
+            todoMap.put(todo.getId(), todo);
+        }
+
+
+        Todo current = todos.stream()
+                .filter(todo -> todo.getPrevId() == -1)
+                .findFirst()
+                .orElse(null);
+
+        // 构建链表结构
+        List<Todo> result = new ArrayList<>();
+
+        while (current != null) {
+            result.add(current);
+            current = todoMap.get(current.getSiblingId());
+        }
+        return result;
     }
 
     @Transactional
     @Override
-    public Boolean order(Integer id, Integer prevTodoId) {
+    public Boolean order(Integer id, Integer prevTodoId, Integer siblingTodoId) {
         Todo currentTodo = todoMapper.selectById(id);
 
-        // 当前项的前后两项
-        Todo prevTodoFrom = null;
-        Todo siblingTodoFrom = null;
-        Todo prevTodoTo = null;
-        Todo siblingTodoTo = null;
-        if (currentTodo.getSiblingId() != -1) {
-            prevTodoFrom = todoMapper.selectById(currentTodo.getPrevId());
-            siblingTodoFrom = todoMapper.selectById(currentTodo.getSiblingId());
 
-            prevTodoFrom.setSiblingId(siblingTodoFrom.getId());
-            siblingTodoFrom.setPrevId(prevTodoFrom.getId());
-        } else {
-            prevTodoFrom = todoMapper.selectById(currentTodo.getPrevId());
-            prevTodoFrom.setSiblingId(-1);
-        }
+        Todo prevTodoTo = todoMapper.selectById(prevTodoId);
+        Todo siblingTodoTo = todoMapper.selectById(siblingTodoId);
+        Todo prevTodoFrom = todoMapper.selectById(currentTodo.getPrevId());
+        Todo siblingTodoFrom = todoMapper.selectById(currentTodo.getSiblingId());
 
-        LambdaQueryWrapper<Todo> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Todo::getPrevId,-1);
-
-        if (prevTodoId > 0) {
-            prevTodoTo = todoMapper.selectById(prevTodoId);
-            siblingTodoTo = todoMapper.selectById(prevTodoTo.getSiblingId());
-
+        if (Objects.nonNull(prevTodoTo)){
             prevTodoTo.setSiblingId(id);
+            todoMapper.updateById(prevTodoTo);
+        }
+        if (Objects.nonNull(siblingTodoTo)){
             siblingTodoTo.setPrevId(id);
-        } else {
-            siblingTodoTo = todoMapper.selectOne(queryWrapper);
-            siblingTodoTo.setPrevId(id);
+            todoMapper.updateById(siblingTodoTo);
+        }
+        if (Objects.nonNull(prevTodoFrom)){
+            prevTodoFrom.setSiblingId(currentTodo.getSiblingId());
+            todoMapper.updateById(prevTodoFrom);
+        }
+        if (Objects.nonNull(siblingTodoFrom)){
+            siblingTodoFrom.setPrevId(currentTodo.getPrevId());
+            todoMapper.updateById(siblingTodoFrom);
         }
 
 
-//        currentTodo.setPrevId(prevId);
-//
-//        currentTodo.setPrevId(-1);
-//        currentTodo.setSiblingId(firstTodo.getId());
-//
-//        firstTodo.setPrevId(id);
-//
-//        todoMapper.update(firstTodo, null);
-//        todoMapper.update(prevTodo, null);
-//        if (silingTodo != null) {
-//            todoMapper.update(silingTodo, null);
-//        }
-//        todoMapper.update(currentTodo, null);
+        currentTodo.setPrevId(prevTodoId);
+        currentTodo.setSiblingId(siblingTodoId);
+        todoMapper.updateById(currentTodo);
 
+        return true;
+    }
 
+    @Override
+    public Boolean saveOrUpdateTodo(Todo todo) {
+        // 新增todo
+        if (Objects.isNull(todo.getId())){
+            // 找到前一个节点
+            Todo prevTodo = baseMapper.selectOne(new LambdaQueryWrapper<Todo>().eq(Todo::getSiblingId,-1));
+            if (prevTodo != null) {
+                // 更新前一个节点的 siblingId
+                prevTodo.setSiblingId(todo.getId());
+                baseMapper.updateById(prevTodo);
+            }
+        }
         return null;
     }
 }

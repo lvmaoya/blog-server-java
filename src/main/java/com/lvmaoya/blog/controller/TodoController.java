@@ -21,7 +21,7 @@ public class TodoController {
 
     @PostMapping
     public Boolean addOrUpdateTodo(@RequestBody Todo todo){
-       return todoService.saveOrUpdate(todo);
+       return todoService.saveOrUpdateTodo(todo);
     }
 
     @GetMapping
@@ -29,8 +29,8 @@ public class TodoController {
         return todoService.getCurrentTodoList();
     }
 
-    @PostMapping("/order/{id}")
-    public Boolean order(@RequestParam Integer prevId,@PathVariable Integer id){
-        return todoService.order(id,prevId);
+    @GetMapping("/order")
+    public Boolean order(@RequestParam Integer prevTodoId,@RequestParam Integer id ,@RequestParam Integer siblingTodoId){
+        return todoService.order(id,prevTodoId,siblingTodoId);
     }
 }
