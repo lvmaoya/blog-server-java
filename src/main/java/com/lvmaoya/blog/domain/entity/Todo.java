@@ -12,7 +12,7 @@ public class Todo {
     private int id;
     private String taskName;
     private String description;
-    private int completed;
+    private int progress;
     private String priority;
     private String category;
     private String assignee;

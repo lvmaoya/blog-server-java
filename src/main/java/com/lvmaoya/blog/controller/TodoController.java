@@ -23,7 +23,10 @@ public class TodoController {
     public Boolean addOrUpdateTodo(@RequestBody Todo todo){
        return todoService.saveOrUpdateTodo(todo);
     }
-
+    @PutMapping
+    public Boolean updateTodo(@RequestBody Todo todo){
+        return todoService.saveOrUpdateTodo(todo);
+    }
     @GetMapping
     public List<Todo> getCurrentTodo(){
         return todoService.getCurrentTodoList();

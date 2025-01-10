@@ -26,9 +26,6 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
     @Override
     public List<Todo> getTodoList(String sortBy) {
         LambdaQueryWrapper<Todo> todoLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        if (Objects.nonNull(sortBy) && sortBy.equals("completed")) {
-            todoLambdaQueryWrapper.orderByAsc(Todo::getCompleted);
-        }
         return todoMapper.selectList(todoLambdaQueryWrapper);
     }
 
@@ -67,6 +64,11 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
     public Boolean order(Integer id, Integer prevTodoId, Integer siblingTodoId) {
         Todo currentTodo = todoMapper.selectById(id);
 
+        // 判断位置没有发生变化
+        if (currentTodo.getPrevId() == prevTodoId || currentTodo.getSiblingId() == siblingTodoId){
+            return false;
+        }
+
 
         Todo prevTodoTo = todoMapper.selectById(prevTodoId);
         Todo siblingTodoTo = todoMapper.selectById(siblingTodoId);
@@ -97,19 +99,33 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
 
         return true;
     }
-
+    @Transactional
     @Override
     public Boolean saveOrUpdateTodo(Todo todo) {
         // 新增todo
-        if (Objects.isNull(todo.getId())){
+        if (todo.getId() == 0){
             // 找到前一个节点
-            Todo prevTodo = baseMapper.selectOne(new LambdaQueryWrapper<Todo>().eq(Todo::getSiblingId,-1));
-            if (prevTodo != null) {
-                // 更新前一个节点的 siblingId
-                prevTodo.setSiblingId(todo.getId());
-                baseMapper.updateById(prevTodo);
+            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            Todo lastTodo = baseMapper.selectOne(new LambdaQueryWrapper<Todo>().like(Todo::getCreatedTime, today).eq(Todo::getSiblingId,-1));
+
+            boolean isSaved = save(todo);
+            if (!isSaved) {
+                return false;
+            }
+
+            if (lastTodo != null) {
+                lastTodo.setSiblingId(todo.getId());
+                baseMapper.updateById(lastTodo);
+                todo.setPrevId(lastTodo.getId());
+                todo.setSiblingId(-1);
+            } else {
+                todo.setPrevId(-1);
+                todo.setSiblingId(-1);
             }
         }
-        return null;
+        if (todo.getPrevId() == 0 || todo.getSiblingId() == 0){
+            throw new RuntimeException("表单错误");
+        }
+        return updateById(todo);
     }
 }
