@@ -1,10 +1,11 @@
 package com.lvmaoya.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Todo;
+import com.lvmaoya.blog.domain.searchParams.TodoListSearchParams;
 import com.lvmaoya.blog.mapper.TodoMapper;
 import com.lvmaoya.blog.service.TodoService;
 import jakarta.annotation.Resource;
@@ -24,9 +25,27 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
     private TodoMapper todoMapper;
 
     @Override
-    public List<Todo> getTodoList(String sortBy) {
+    public IPage<Todo> getTodoList(TodoListSearchParams todoListSearchParams) {
+
+        if (Objects.isNull(todoListSearchParams)){
+            return todoMapper.selectPage(new Page<>(1,999),null);
+        }
+
         LambdaQueryWrapper<Todo> todoLambdaQueryWrapper = new LambdaQueryWrapper<>();
-        return todoMapper.selectList(todoLambdaQueryWrapper);
+        IPage<Todo> page = new Page<>(todoListSearchParams.getPage(), todoListSearchParams.getSize());
+
+        // 根据 id 进行精确查询
+        todoLambdaQueryWrapper.eq(todoListSearchParams.getId() > 0,Todo::getId, todoListSearchParams.getId());
+        todoLambdaQueryWrapper.like(Objects.nonNull(todoListSearchParams.getTaskName()),Todo::getTaskName, todoListSearchParams.getTaskName());
+        todoLambdaQueryWrapper.like(Objects.nonNull(todoListSearchParams.getDescription()),Todo::getDescription, todoListSearchParams.getDescription());
+        todoLambdaQueryWrapper.eq(todoListSearchParams.getProgress() > 0,Todo::getProgress, todoListSearchParams.getProgress());
+        todoLambdaQueryWrapper.eq(Objects.nonNull(todoListSearchParams.getPriority()),Todo::getPriority, todoListSearchParams.getPriority());
+        todoLambdaQueryWrapper.eq(Objects.nonNull(todoListSearchParams.getCategory()),Todo::getCategory, todoListSearchParams.getCategory());
+        todoLambdaQueryWrapper.eq(Objects.nonNull(todoListSearchParams.getAssignee()),Todo::getAssignee, todoListSearchParams.getAssignee());
+        todoLambdaQueryWrapper.ge(Objects.nonNull(todoListSearchParams.getCreatedStart()),Todo::getCreatedTime, todoListSearchParams.getCreatedStart());
+        todoLambdaQueryWrapper.le(Objects.nonNull(todoListSearchParams.getCreatedEnd()),Todo::getCreatedTime, todoListSearchParams.getCreatedEnd());
+
+        return todoMapper.selectPage(page,todoLambdaQueryWrapper);
     }
 
     @Override

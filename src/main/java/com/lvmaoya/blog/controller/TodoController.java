@@ -1,6 +1,8 @@
 package com.lvmaoya.blog.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.lvmaoya.blog.domain.entity.Todo;
+import com.lvmaoya.blog.domain.searchParams.TodoListSearchParams;
 import com.lvmaoya.blog.service.TodoService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,9 +16,9 @@ public class TodoController {
     @Resource
     private TodoService todoService;
 
-    @GetMapping("/list")
-    public List<Todo> getTodoList(@RequestParam(required = false) String sortBy){
-       return todoService.getTodoList(sortBy);
+    @PostMapping("/list")
+    public IPage<Todo> getTodoList(@RequestBody(required = false) TodoListSearchParams todoListSearchParams){
+       return todoService.getTodoList(todoListSearchParams);
     }
 
     @PostMapping
