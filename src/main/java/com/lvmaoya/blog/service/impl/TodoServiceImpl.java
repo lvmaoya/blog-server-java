@@ -1,5 +1,6 @@
 package com.lvmaoya.blog.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -44,7 +45,8 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
         todoLambdaQueryWrapper.eq(Objects.nonNull(todoListSearchParams.getAssignee()),Todo::getAssignee, todoListSearchParams.getAssignee());
         todoLambdaQueryWrapper.ge(Objects.nonNull(todoListSearchParams.getCreatedStart()),Todo::getCreatedTime, todoListSearchParams.getCreatedStart());
         todoLambdaQueryWrapper.le(Objects.nonNull(todoListSearchParams.getCreatedEnd()),Todo::getCreatedTime, todoListSearchParams.getCreatedEnd());
-
+        todoLambdaQueryWrapper.ge(Objects.nonNull(todoListSearchParams.getDueDateStart()),Todo::getDueDate, todoListSearchParams.getDueDateStart());
+        todoLambdaQueryWrapper.le(Objects.nonNull(todoListSearchParams.getDueDateEnd()),Todo::getDueDate, todoListSearchParams.getDueDateEnd());
         return todoMapper.selectPage(page,todoLambdaQueryWrapper);
     }
 
@@ -54,7 +56,7 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
 
 
         List<Todo> todos = baseMapper.selectList(new LambdaQueryWrapper<Todo>()
-                .like(Todo::getCreatedTime, today));
+                .like(Todo::getDueDate, today));
 
         // 构建 id 到 Todo 的映射
         Map<Integer, Todo> todoMap = new HashMap<>();
@@ -124,8 +126,8 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
         // 新增todo
         if (todo.getId() == 0){
             // 找到前一个节点
-            String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            Todo lastTodo = baseMapper.selectOne(new LambdaQueryWrapper<Todo>().like(Todo::getCreatedTime, today).eq(Todo::getSiblingId,-1));
+            String day = DateUtil.format(todo.getDueDate(), "yyyy-MM-dd");
+            Todo lastTodo = baseMapper.selectOne(new LambdaQueryWrapper<Todo>().like(Todo::getDueDate, day).eq(Todo::getSiblingId,-1));
 
             boolean isSaved = save(todo);
             if (!isSaved) {
