@@ -23,10 +23,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginUserVo login(@RequestBody User user) {
-        if (!StringUtils.hasText(user.getName())){
+        if (!StringUtils.hasText(user.getUsername())){
             throw new IllegalArgumentException();
         }
-        return authService.login(user.getName(), user.getPassword());
+        return authService.login(user.getUsername(), user.getPassword());
     }
 
     @GetMapping("/logout")

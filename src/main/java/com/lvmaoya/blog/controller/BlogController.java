@@ -16,7 +16,7 @@ public class BlogController {
     private BlogService blogService;
 
 
-    @GetMapping("/list")
+    @PostMapping("/list")
     public IPage<BlogVo> list(@RequestBody(required = false) BlogListSearchParams blogListSearchParams) {
         return blogService.blogList(blogListSearchParams);
     }
