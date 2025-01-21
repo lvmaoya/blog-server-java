@@ -38,4 +38,8 @@ public class TodoController {
     public Boolean order(@RequestParam Integer prevTodoId,@RequestParam Integer id ,@RequestParam Integer siblingTodoId){
         return todoService.order(id,prevTodoId,siblingTodoId);
     }
+    @DeleteMapping("/{id}")
+    public Boolean order(@PathVariable Integer id){
+        return todoService.deleteTodo(id);
+    }
 }

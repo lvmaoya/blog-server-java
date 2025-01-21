@@ -15,4 +15,6 @@ public interface TodoService  extends IService<Todo> {
     Boolean order(Integer id, Integer prevId, Integer siblingTodoId);
 
     Boolean saveOrUpdateTodo(Todo todo);
+
+    Boolean deleteTodo(Integer id);
 }
