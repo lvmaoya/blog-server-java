@@ -149,4 +149,27 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
         }
         return updateById(todo);
     }
+    @Transactional
+    @Override
+    public Boolean deleteTodo(Integer id) {
+        // 查询该id对应的todo
+        Todo todo = todoMapper.selectById(id);
+        if (Objects.isNull(todo)) return false;
+
+        // 查询其前一个todo
+        Todo prevTodo = todoMapper.selectById(todo.getPrevId());
+        Todo siblingTodo = todoMapper.selectById(todo.getSiblingId());
+
+        if (Objects.nonNull(prevTodo)){
+            prevTodo.setSiblingId(todo.getSiblingId());
+            todoMapper.updateById(prevTodo);
+        }
+        if (Objects.nonNull(siblingTodo)){
+            siblingTodo.setPrevId(todo.getPrevId());
+            todoMapper.updateById(siblingTodo);
+        }
+        todoMapper.deleteById(id);
+
+        return true;
+    }
 }
