@@ -56,8 +56,6 @@ public class SecurityConfig {
                             .requestMatchers("/captcha").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/todo*").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/todo/*").permitAll()//登录和未登录的人都可以访问
-                            .requestMatchers("/blog/*").permitAll()//登录和未登录的人都可以访问
-                            .requestMatchers("/logout").authenticated()
                             .anyRequest().authenticated())//其它所有请求需要认证访问
                     .csrf(AbstractHttpConfigurer::disable)//防止跨域伪造
                     .logout(AbstractHttpConfigurer::disable);// 禁用 Spring Security 的默认注销功能
