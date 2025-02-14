@@ -122,7 +122,7 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
     }
     @Transactional
     @Override
-    public Boolean saveOrUpdateTodo(Todo todo) {
+    public Todo saveOrUpdateTodo(Todo todo) {
         // 新增todo
         if (todo.getId() == 0){
             // 找到前一个节点
@@ -131,7 +131,7 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
 
             boolean isSaved = save(todo);
             if (!isSaved) {
-                return false;
+                throw new RuntimeException("保存 Todo 失败");
             }
 
             if (lastTodo != null) {
@@ -147,7 +147,15 @@ public class TodoServiceImpl extends ServiceImpl<TodoMapper, Todo> implements To
         if (todo.getPrevId() == 0 || todo.getSiblingId() == 0){
             throw new RuntimeException("表单错误");
         }
-        return updateById(todo);
+        // 更新 Todo
+        boolean isUpdated = updateById(todo);
+        if (!isUpdated) {
+            // 抛出异常触发事务回滚
+            throw new RuntimeException("更新 Todo 失败");
+        }
+
+        // 返回更新后的 Todo 对象
+        return baseMapper.selectById(todo.getId());
     }
     @Transactional
     @Override

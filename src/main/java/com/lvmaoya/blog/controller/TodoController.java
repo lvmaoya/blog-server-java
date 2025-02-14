@@ -22,11 +22,11 @@ public class TodoController {
     }
 
     @PostMapping
-    public Boolean addOrUpdateTodo(@RequestBody Todo todo){
+    public Todo addOrUpdateTodo(@RequestBody Todo todo){
        return todoService.saveOrUpdateTodo(todo);
     }
     @PutMapping
-    public Boolean updateTodo(@RequestBody Todo todo){
+    public Todo updateTodo(@RequestBody Todo todo){
         return todoService.saveOrUpdateTodo(todo);
     }
     @GetMapping

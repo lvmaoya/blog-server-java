@@ -7,6 +7,8 @@ spring:
     url: jdbc:mysql://101.43.54.84:3306/personal_web_test
     username: lvmaoya
     password: root
+    hikari:
+      max-lifetime: 120000
   servlet:
     multipart:
       max-file-size: 2MB
@@ -25,4 +27,3 @@ mybatis-plus:
       id-type: auto
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
