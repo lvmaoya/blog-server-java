@@ -27,3 +27,10 @@ mybatis-plus:
       id-type: auto
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+qiniu:
+  access-key: kcZ7Yit7IS89-ZGZ6_KhiFuXVyVa-Rp1PBXpoOdL
+  secret-key: dAMRUy71Y0_5nYBaC8pYzIu4UYSKR4SHBUYLeeQq
+  bucket: lvmaoya
+  domain: https://qn.lvmaoya.cn
+  folder: javaTest
