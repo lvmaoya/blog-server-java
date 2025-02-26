@@ -16,6 +16,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -27,7 +30,8 @@ public class SecurityConfig {
     private AccessDeniedHandler accessDeniedHandler;
     @Resource
     private AuthenticationEntryPoint authenticationEntryPoint;
-
+    @Resource
+    private CorsFilter corsFilter;
     /**
      * 配置密码加密方式
      */
@@ -68,6 +72,8 @@ public class SecurityConfig {
 
             // 把jwtAuthenticationTokenFilter添加到SpringSecurity的过滤器中
             http.addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class);
-            return http.build();
+        http.addFilterBefore(corsFilter, JwtAuthenticationTokenFilter.class);
+
+        return http.build();
     }
 }
