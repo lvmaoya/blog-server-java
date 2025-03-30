@@ -17,6 +17,7 @@ public class BlogVo {
     private String id;
     private String title;
     private String description;
+    private String keywords;
     private Category category;
     private String categoryId;
     private String fatherCategoryId;
@@ -25,7 +26,6 @@ public class BlogVo {
     private int pageView;
     private int preferNum;
     private int status;
-    private int privacy;
     private String authorId;
     private int top;
     private int deleted;
