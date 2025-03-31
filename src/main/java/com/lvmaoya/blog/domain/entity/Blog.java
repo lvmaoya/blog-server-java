@@ -17,6 +17,7 @@ public class Blog {
     private String title;
     private String description;
     private String keywords;
+    private String articleAbstract;
     private String categoryId;
     private String fatherCategoryId;
     private String coverImage;

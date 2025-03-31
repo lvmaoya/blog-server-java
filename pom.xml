@@ -99,6 +99,12 @@
             <artifactId>qiniu-java-sdk</artifactId>
             <version>7.7.0</version>
         </dependency>
+        <!--  spring-ai  -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+            <version>1.0.0-M5</version>
+        </dependency>
     </dependencies>
 
     <build>
