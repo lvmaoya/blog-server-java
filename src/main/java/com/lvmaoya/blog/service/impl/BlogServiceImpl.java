@@ -11,6 +11,7 @@ import com.lvmaoya.blog.domain.searchParams.BlogListSearchParams;
 import com.lvmaoya.blog.domain.vo.BlogVo;
 import com.lvmaoya.blog.mapper.BlogContentMapper;
 import com.lvmaoya.blog.mapper.BlogMapper;
+import com.lvmaoya.blog.service.AsyncBlogService;
 import com.lvmaoya.blog.service.BlogService;
 import com.lvmaoya.blog.service.CategoryService;
 import com.lvmaoya.blog.utils.BeanCopyUtil;
@@ -36,7 +37,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Resource
     private CategoryService categoryService;
     @Resource
-    private OpenAiChatModel chatModel;
+    private AsyncBlogService asyncBlogService;
     @Override
     public IPage<BlogVo> blogList(BlogListSearchParams blogListSearchParams) {
         int page = blogListSearchParams.getPage() == null ? 1 : blogListSearchParams.getPage();
@@ -131,45 +132,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
             res = blogContentMapper.updateById(blogContent);
         }
         // 异步生成摘要
-        generateAbstractAsync(blog.getId());
+        // Spring的@Async是基于代理实现的，同一个类内部的方法调用不会经过代理，导致异步失效。
+//        asyncBlogService.updateBlog(blog.getId());
         return res > 0;
-    }
-
-    @Async("taskExecutor")
-    public void generateAbstractAsync(String articleId) {
-        try {
-            BlogVo article = getBlogById(articleId);
-            System.out.println(article.getTitle());
-            if (article == null){
-                new RuntimeException("Article not found");
-            }
-
-            String abstractText = generateAbstract(
-                    article.getTitle(),
-                    article.getDescription(),
-                    article.getContent()
-            );
-            System.out.println(abstractText);
-            Blog blog = BeanCopyUtil.copyBean(article, Blog.class);
-
-            // 更新摘要和状态
-            article.setArticleAbstract(abstractText);
-            blogMapper.updateById(blog);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-        }
-    }
-    private String generateAbstract(String title, String description, String content) {
-        String promptText = String.format(
-                "请为以下文章生成一个简洁的摘要(不超过150字):\n" +
-                        "标题: %s\n" +
-                        "描述: %s\n" +
-                        "内容: %s\n" +
-                        "摘要:", title, description, content);
-
-        Prompt prompt = new Prompt(new UserMessage(promptText));
-        ChatResponse response = chatModel.call(prompt);
-
-        return response.getResult().getOutput().getContent();
     }
 }
