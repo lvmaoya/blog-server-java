@@ -60,6 +60,7 @@ public class SecurityConfig {
                             .requestMatchers("/captcha").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/*").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/*/*").permitAll()//登录和未登录的人都可以访问
+                            .requestMatchers("/*/*/*").permitAll()//登录和未登录的人都可以访问
                             .anyRequest().authenticated()
                     )//其它所有请求需要认证访问
                     .csrf(AbstractHttpConfigurer::disable)//防止跨域伪造
