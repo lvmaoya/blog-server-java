@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.searchParams.BlogListSearchParams;
 import com.lvmaoya.blog.domain.vo.BlogVo;
+import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.service.BlogService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
@@ -45,5 +46,13 @@ public class BlogController {
     @PostMapping
     public boolean saveBlog(@RequestBody BlogVo blogVo) {
        return blogService.saveOrUpdate(blogVo);
+    }
+
+    /**
+     * 文章置顶
+     */
+    @PutMapping("/{id}/top")
+    public R setTop(@PathVariable String id) {
+        return blogService.setTop(id);
     }
 }

@@ -9,6 +9,7 @@ import com.lvmaoya.blog.domain.entity.BlogContent;
 import com.lvmaoya.blog.domain.entity.Category;
 import com.lvmaoya.blog.domain.searchParams.BlogListSearchParams;
 import com.lvmaoya.blog.domain.vo.BlogVo;
+import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.mapper.BlogContentMapper;
 import com.lvmaoya.blog.mapper.BlogMapper;
 import com.lvmaoya.blog.service.AsyncBlogService;
@@ -135,5 +136,24 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // Spring的@Async是基于代理实现的，同一个类内部的方法调用不会经过代理，导致异步失效。
 //        asyncBlogService.updateBlog(blog.getId());
         return res > 0;
+    }
+
+
+    @Transactional
+    public R setTop(String id) {
+        Blog blog = blogMapper.selectById(id);
+        // 取消置顶
+        if (blog.getTop() == 0) {
+            blog.setTop(1);
+            blogMapper.updateById(blog);
+            return R.success();
+        }
+
+        // 设置置顶
+        blog.setTop(0);
+        blogMapper.updateById(blog);
+
+        // 如果需要更复杂的置顶逻辑(如优先级)，可以在这里扩展
+        return R.success();
     }
 }
