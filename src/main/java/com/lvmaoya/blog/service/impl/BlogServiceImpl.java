@@ -16,8 +16,13 @@ import com.lvmaoya.blog.service.CategoryService;
 import com.lvmaoya.blog.utils.BeanCopyUtil;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.Date;
 import java.util.List;
@@ -30,7 +35,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     private BlogContentMapper blogContentMapper;
     @Resource
     private CategoryService categoryService;
-
+    @Resource
+    private OpenAiChatModel chatModel;
     @Override
     public IPage<BlogVo> blogList(BlogListSearchParams blogListSearchParams) {
         int page = blogListSearchParams.getPage() == null ? 1 : blogListSearchParams.getPage();
@@ -124,6 +130,46 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
             BlogContent blogContent = new BlogContent(id, blogVo.getContent());
             res = blogContentMapper.updateById(blogContent);
         }
+        // 异步生成摘要
+        generateAbstractAsync(blog.getId());
         return res > 0;
+    }
+
+    @Async("taskExecutor")
+    public void generateAbstractAsync(String articleId) {
+        try {
+            BlogVo article = getBlogById(articleId);
+            System.out.println(article.getTitle());
+            if (article == null){
+                new RuntimeException("Article not found");
+            }
+
+            String abstractText = generateAbstract(
+                    article.getTitle(),
+                    article.getDescription(),
+                    article.getContent()
+            );
+            System.out.println(abstractText);
+            Blog blog = BeanCopyUtil.copyBean(article, Blog.class);
+
+            // 更新摘要和状态
+            article.setArticleAbstract(abstractText);
+            blogMapper.updateById(blog);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+    }
+    private String generateAbstract(String title, String description, String content) {
+        String promptText = String.format(
+                "请为以下文章生成一个简洁的摘要(不超过150字):\n" +
+                        "标题: %s\n" +
+                        "描述: %s\n" +
+                        "内容: %s\n" +
+                        "摘要:", title, description, content);
+
+        Prompt prompt = new Prompt(new UserMessage(promptText));
+        ChatResponse response = chatModel.call(prompt);
+
+        return response.getResult().getOutput().getContent();
     }
 }
