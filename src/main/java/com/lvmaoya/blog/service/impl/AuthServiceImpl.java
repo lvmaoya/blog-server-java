@@ -4,6 +4,7 @@ import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import com.lvmaoya.blog.domain.entity.LoginUser;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
+import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.domain.vo.UserVo;
 import com.lvmaoya.blog.mapper.UserMapper;
 import com.lvmaoya.blog.service.AuthService;
@@ -38,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
     RedisCacheUtil redisCacheUtil;
 
     @Override
-    public LoginUserVo login(String username, String password) {
+    public R login(String username, String password) {
 
 
 
@@ -67,11 +68,11 @@ public class AuthServiceImpl implements AuthService {
 
         //把token和user封装、返回
 
-        return loginUserVo;
+        return R.success(loginUserVo);
     }
 
     @Override
-    public Object logout() {
+    public R logout() {
         // 解析token获取到用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         LoginUserVo user = (LoginUserVo)authentication.getPrincipal();
@@ -79,7 +80,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 删除redis登录
         redisCacheUtil.delete("blogLogin"+id);
-        return "success";
+        return R.success();
     }
 
     @Override

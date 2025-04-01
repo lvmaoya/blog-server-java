@@ -28,7 +28,7 @@ public class AsyncBlogServiceImpl implements AsyncBlogService {
     private OpenAiChatModel chatModel;
     @Override
     @Async("taskExecutor")
-    public void updateBlog(String articleId) {
+    public void updateBlog(Integer articleId) {
         try {
             Blog blog = blogMapper.selectById(articleId);
             BlogContent blogContent = blogContentMapper.selectById(articleId);

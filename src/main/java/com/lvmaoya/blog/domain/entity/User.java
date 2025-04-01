@@ -16,8 +16,8 @@ public class User implements Serializable {
     private String otherContact;
     private String introduce;
     private String avatar;
-    private String createdAt;
-    private String updatedAt;
+    private String createdTime;
+    private String updatedTime;
     @TableLogic
     private Integer deleted;
 }

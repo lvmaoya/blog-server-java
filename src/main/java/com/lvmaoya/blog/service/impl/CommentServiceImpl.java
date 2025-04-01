@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Comment;
 import com.lvmaoya.blog.domain.searchParams.CommentSearchParams;
+import com.lvmaoya.blog.domain.vo.R;
+import com.lvmaoya.blog.handler.exception.BusinessException;
 import com.lvmaoya.blog.mapper.BlogMapper;
 import com.lvmaoya.blog.mapper.CommentMapper;
 import com.lvmaoya.blog.service.CommentService;
@@ -25,20 +27,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     private BlogMapper blogMapper;
 
     @Override
-    public boolean addOrUpdateComment(Comment comment) {
+    public R addOrUpdateComment(Comment comment) {
         QueryWrapper<Blog> blogQueryWrapper = new QueryWrapper<>();
+        blogQueryWrapper.eq("id", comment.getArticleId());
         Long l = blogMapper.selectCount(blogQueryWrapper);
         if (l == 0) {
-            throw new RuntimeException("没有这篇文章");
+            throw new BusinessException(400, "没有这篇文章");
         }
-
-
-
-        return commentMapper.insertOrUpdate(comment);
+        return R.success(commentMapper.insertOrUpdate(comment));
     }
 
     @Override
-    public IPage<Comment> selectList(CommentSearchParams commentSearchParams) {
+    public R selectList(CommentSearchParams commentSearchParams) {
         int page = commentSearchParams.getPage() == null ? 1 : commentSearchParams.getPage();
         int size = commentSearchParams.getSize() == null ? 20 : commentSearchParams.getSize();
 
@@ -47,6 +47,6 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         queryWrapper.eq(Objects.nonNull(commentSearchParams.getStatus()),Comment::getStatus, commentSearchParams.getStatus());
 
         IPage<Comment> iPage = new Page<>(page,size);
-        return commentMapper.selectPage(iPage,queryWrapper);
+        return R.success(commentMapper.selectPage(iPage,queryWrapper));
     }
 }

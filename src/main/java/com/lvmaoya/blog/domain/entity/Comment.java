@@ -17,7 +17,7 @@ public class Comment {
     private Integer rootId;
     private Integer toUserId;
     private String toUserName;
-    private String avatar;
+    private Integer avatar;
     private String userName;
     private String email;
     private String content;

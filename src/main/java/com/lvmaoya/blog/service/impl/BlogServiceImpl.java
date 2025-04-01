@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lvmaoya.blog.domain.dto.BlogPostDto;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.BlogContent;
 import com.lvmaoya.blog.domain.entity.Category;
@@ -40,7 +41,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Resource
     private AsyncBlogService asyncBlogService;
     @Override
-    public IPage<BlogVo> blogList(BlogListSearchParams blogListSearchParams) {
+    public R blogList(BlogListSearchParams blogListSearchParams) {
         int page = blogListSearchParams.getPage() == null ? 1 : blogListSearchParams.getPage();
         int size = blogListSearchParams.getSize() == null ? 10 : blogListSearchParams.getSize();
         String sortBy = blogListSearchParams.getSortBy();
@@ -92,10 +93,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         pageVo.setPages(pageObj.getPages());
         pageVo.setCurrent(pageObj.getCurrent());
 
-        return pageVo;
+        return R.success(pageVo);
     };
 
-    public BlogVo getBlogById(String id) {
+    public R getBlogById(String id) {
         Blog blog = blogMapper.selectById(id);
         if(blog == null){
             return null;
@@ -105,18 +106,18 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         if(blogContent != null){
             blogVo.setContent(blogContent.getContent());
         }
-        return blogVo;
+        return R.success(blogVo);
     }
 
     @Override
-    public boolean removeById(String id) {
+    public R removeById(String id) {
         blogMapper.deleteById(id);
-        return true;
+        return R.success(true);
     }
 
     @Transactional
     @Override
-    public boolean saveOrUpdate(BlogVo blogVo) {
+    public R saveOrUpdate(BlogPostDto blogVo) {
         Blog blog = BeanCopyUtil.copyBean(blogVo, Blog.class);
 
         int res;
@@ -135,7 +136,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // 异步生成摘要
         // Spring的@Async是基于代理实现的，同一个类内部的方法调用不会经过代理，导致异步失效。
 //        asyncBlogService.updateBlog(blog.getId());
-        return res > 0;
+        return R.success(res > 0);
     }
 
 

@@ -7,5 +7,5 @@ import com.lvmaoya.blog.domain.searchParams.BlogListSearchParams;
 import com.lvmaoya.blog.domain.vo.BlogVo;
 
 public interface AsyncBlogService {
-    void updateBlog(String articleId);
+    void updateBlog(Integer articleId);
 }

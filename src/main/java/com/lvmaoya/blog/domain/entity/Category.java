@@ -12,7 +12,7 @@ import java.util.Date;
 public class Category {
     private Integer id;
     private String categoryName;
-    private String fatherCategoryId;
+    private Integer fatherCategoryId;
     private int deleted;
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")

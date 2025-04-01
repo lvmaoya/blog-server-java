@@ -29,7 +29,7 @@ public class ChatController {
     public R chat(String message) {
         // 验证输入
         if (StringUtils.isBlank(message)) {
-            throw new IllegalCallerException("消息内容不能为空");
+            throw new IllegalArgumentException("消息内容不能为空");
         }
         try {
             // 创建只包含当前消息的Prompt

@@ -1,6 +1,7 @@
 package com.lvmaoya.blog.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.lvmaoya.blog.domain.dto.BlogPostDto;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.searchParams.BlogListSearchParams;
 import com.lvmaoya.blog.domain.vo.BlogVo;
@@ -17,22 +18,22 @@ public class BlogController {
     private BlogService blogService;
 
     @PostMapping("/list")
-    public IPage<BlogVo> list(@RequestBody(required = false) BlogListSearchParams blogListSearchParams) {
+    public R list(@RequestBody(required = false) BlogListSearchParams blogListSearchParams) {
         return blogService.blogList(blogListSearchParams);
     }
 
     @GetMapping("/{id}")
-    public BlogVo getArticle(@PathVariable String id) {
+    public R getArticle(@PathVariable String id) {
         return blogService.getBlogById(id);
     }
 
     @DeleteMapping("/{id}")
-    public Boolean deleteBlog(@PathVariable String id) {
+    public R deleteBlog(@PathVariable String id) {
         return blogService.removeById(id);
     }
 
     @PostMapping
-    public boolean saveBlog(@RequestBody BlogVo blogVo) {
+    public R saveBlog(@RequestBody BlogPostDto blogVo) {
        return blogService.saveOrUpdate(blogVo);
     }
 

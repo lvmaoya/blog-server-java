@@ -1,7 +1,9 @@
 package com.lvmaoya.blog.controller;
 
+import com.lvmaoya.blog.domain.dto.LoginDto;
 import com.lvmaoya.blog.domain.entity.User;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
+import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.service.AuthService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,7 +23,7 @@ public class AuthController {
     AuthService authService;
 
     @PostMapping("/login")
-    public LoginUserVo login(@RequestBody User user) {
+    public R login(@RequestBody LoginDto user) {
         if (!StringUtils.hasText(user.getUsername())){
             throw new IllegalArgumentException();
         }
@@ -29,7 +31,7 @@ public class AuthController {
     }
 
     @GetMapping("/logout")
-    public Object logout() {
+    public R logout() {
         return authService.logout();
     }
     @GetMapping("/captcha")

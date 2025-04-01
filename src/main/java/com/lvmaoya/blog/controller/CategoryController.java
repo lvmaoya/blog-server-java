@@ -1,6 +1,7 @@
 package com.lvmaoya.blog.controller;
 
 import com.lvmaoya.blog.domain.entity.Category;
+import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.service.CategoryService;
 import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
@@ -16,17 +17,17 @@ public class CategoryController {
     CategoryService categoryService;
 
     @GetMapping("/list")
-    public List<Category> getCategoryList() {
-        return categoryService.list();
+    public R getCategoryList() {
+        return R.success(categoryService.list());
     }
 
     @PostMapping
-    public boolean addCategory(@RequestBody Category category) {
-        return categoryService.saveOrUpdate(category);
+    public R addOrUpdateCategory(@RequestBody Category category) {
+        return R.success(categoryService.saveOrUpdate(category));
     }
 
     @DeleteMapping("/{id}")
-    public boolean deleteCategory(@PathVariable String id) {
+    public R deleteCategory(@PathVariable String id) {
         return categoryService.removeById(id);
     }
 }
