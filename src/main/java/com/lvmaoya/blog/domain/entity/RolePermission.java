@@ -12,9 +12,9 @@ public class RolePermission implements Serializable {
     /**
     * 角色ID
     */
-    private Long roleId;
+    private Integer roleId;
     /**
     * 权限ID
     */
-    private Long permissionId;
+    private Integer permissionId;
 }

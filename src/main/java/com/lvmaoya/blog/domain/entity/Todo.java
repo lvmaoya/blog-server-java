@@ -9,15 +9,15 @@ import java.util.Date;
 
 @Data
 public class Todo {
-    private int id;
+    private Integer id;
     private String taskName;
     private String description;
     private int progress;
     private String priority;
     private String category;
     private String assignee;
-    private int prevId;
-    private int siblingId;
+    private Integer prevId;
+    private Integer siblingId;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date dueDate;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")

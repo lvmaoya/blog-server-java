@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BlogContent {
-    private String id;
+    private Integer id;
     private String content;
 }

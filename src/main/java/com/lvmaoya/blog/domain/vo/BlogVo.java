@@ -14,20 +14,20 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BlogVo {
-    private String id;
+    private Integer id;
     private String title;
     private String description;
     private String keywords;
     private String articleAbstract;
     private Category category;
-    private String categoryId;
-    private String fatherCategoryId;
+    private Integer categoryId;
+    private Integer fatherCategoryId;
     private String coverImage;
     private String content;
     private int pageView;
     private int preferNum;
     private int status;
-    private String authorId;
+    private Integer authorId;
     private int top;
     private int deleted;
     @TableField(fill = FieldFill.INSERT) // 第一次插入时自动填充

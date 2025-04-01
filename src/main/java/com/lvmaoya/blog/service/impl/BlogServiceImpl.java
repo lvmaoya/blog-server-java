@@ -123,12 +123,12 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         if (blogVo.getId() == null) {
             blogMapper.insert(blog);
             // 获取插入后的文章id
-            String id = blog.getId();
+            Integer id = blog.getId();
             BlogContent blogContent = new BlogContent(id, blogVo.getContent());
             res = blogContentMapper.insert(blogContent);
         }else {
             blogMapper.updateById(blog);
-            String id = blog.getId();
+            Integer id = blog.getId();
             BlogContent blogContent = new BlogContent(id, blogVo.getContent());
             res = blogContentMapper.updateById(blogContent);
         }

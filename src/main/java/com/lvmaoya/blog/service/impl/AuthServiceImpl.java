@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
         // 解析token获取到用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         LoginUserVo user = (LoginUserVo)authentication.getPrincipal();
-        Long id = user.getUser().getId();
+        Integer id = user.getUser().getId();
 
         // 删除redis登录
         redisCacheUtil.delete("blogLogin"+id);

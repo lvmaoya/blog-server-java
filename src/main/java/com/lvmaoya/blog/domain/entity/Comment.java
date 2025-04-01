@@ -11,11 +11,11 @@ import java.util.Date;
 @Data
 @TableName("commentary")
 public class Comment {
-    private String id;
-    private String articleId;
+    private Integer id;
+    private Integer articleId;
     private int type;
-    private String rootId;
-    private String toUserId;
+    private Integer rootId;
+    private Integer toUserId;
     private String toUserName;
     private String avatar;
     private String userName;

@@ -26,7 +26,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         if (category == null) {
             throw new RuntimeException("没有此类");
         }else{
-            if(!Objects.equals(category.getFatherCategoryName(),"2")){
+            if(!Objects.equals(category.getFatherCategoryId(),"2")){
                 throw new RuntimeException("此类不可删除");
             }
         }
