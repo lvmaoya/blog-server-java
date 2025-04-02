@@ -7,6 +7,7 @@ import jakarta.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 
 @RestController
@@ -23,7 +24,7 @@ public class CategoryController {
 
     @PostMapping
     public R addOrUpdateCategory(@RequestBody Category category) {
-        return R.success(categoryService.saveOrUpdate(category));
+        return categoryService.saveOrUpdateCategory(category);
     }
 
     @DeleteMapping("/{id}")
