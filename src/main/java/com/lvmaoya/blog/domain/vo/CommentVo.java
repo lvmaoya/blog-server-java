@@ -1,4 +1,4 @@
-package com.lvmaoya.blog.domain.entity;
+package com.lvmaoya.blog.domain.vo;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -10,9 +10,10 @@ import java.util.Date;
 
 @Data
 @TableName("commentary")
-public class Comment {
+public class CommentVo {
     private Integer id;
     private Integer articleId;
+    private String articleTitle;
     private int type; // 0：文章评论，1：评论评论
     private Integer rootId; // 评论的根评论
     private Integer toUserId;

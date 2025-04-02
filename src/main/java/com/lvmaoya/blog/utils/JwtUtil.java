@@ -12,7 +12,7 @@ public class JwtUtil {
     private static final String SECRET_KEY = "LumoyooLumoyooLumoyooLumoyooLumoyooLumoyooLumoyoo";
     // 这里的密钥应该妥善保管，在实际应用中可以从配置文件等地方获取更安全的密钥
 
-    private static final long EXPIRATION_TIME = 864000000; // 示例设置1天的过期时间，单位是毫秒，可按需调整
+    private static final long EXPIRATION_TIME = 86400000; // 示例设置1天的过期时间，单位是毫秒，可按需调整
 
     // 从JWT令牌中获取用户名的方法（假设用户名存储在名为"sub"的claim中，可根据实际情况修改）
     public static String getUsernameFromToken(String token) {

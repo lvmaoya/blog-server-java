@@ -8,15 +8,21 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Comment;
 import com.lvmaoya.blog.domain.searchParams.CommentSearchParams;
+import com.lvmaoya.blog.domain.vo.CommentVo;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.handler.exception.BusinessException;
 import com.lvmaoya.blog.mapper.BlogMapper;
 import com.lvmaoya.blog.mapper.CommentMapper;
 import com.lvmaoya.blog.service.CommentService;
 import jakarta.annotation.Resource;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements CommentService {
@@ -47,6 +53,35 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         queryWrapper.eq(Objects.nonNull(commentSearchParams.getStatus()),Comment::getStatus, commentSearchParams.getStatus());
 
         IPage<Comment> iPage = new Page<>(page,size);
-        return R.success(commentMapper.selectPage(iPage,queryWrapper));
+        IPage<Comment> commentPage = commentMapper.selectPage(iPage, queryWrapper);
+        // 提取所有文章ID
+        Set<Integer> articleIds = commentPage.getRecords().stream()
+                .map(Comment::getArticleId)
+                .collect(Collectors.toSet());
+
+        // 批量查询文章
+        Map<Integer, String> articleTitleMap = blogMapper.selectBatchIds(articleIds)
+                .stream()
+                .collect(Collectors.toMap(Blog::getId, Blog::getTitle));
+
+        // 转换为DTO
+        List<CommentVo> vos = commentPage.getRecords().stream()
+                .map(comment -> {
+                    CommentVo vo = new CommentVo();
+                    BeanUtils.copyProperties(comment, vo);
+                    vo.setArticleTitle(articleTitleMap.get(comment.getArticleId()));
+                    return vo;
+                })
+                .collect(Collectors.toList());
+
+        // 构建返回分页对象
+        Page<CommentVo> resultPage = new Page<>(
+                commentPage.getCurrent(),
+                commentPage.getSize(),
+                commentPage.getTotal()
+        );
+        resultPage.setRecords(vos);
+
+        return R.success(resultPage);
     }
 }
