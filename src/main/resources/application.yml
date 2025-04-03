@@ -24,6 +24,14 @@ spring:
       chat:
         options:
           model: deepseek-chat
+  mail:
+    host: smtp.qq.com
+    protocol: smtp
+    username: 1504734652@qq.com
+    password: kywytppoyefrbadh
+    default-encoding: utf-8
+    ssl:
+      enabled: true
 
 mybatis-plus:
   global-config:
