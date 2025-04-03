@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -30,6 +31,7 @@ public class EmailUtil {
      * @return 是否成功
      */
     @SneakyThrows(Exception.class)
+    @Async("taskExecutor")
     public boolean sendGeneralEmail(String subject, String content, String... to){
         // 创建邮件消息
         org.springframework.mail.SimpleMailMessage message = new org.springframework.mail.SimpleMailMessage();

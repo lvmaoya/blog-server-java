@@ -5,6 +5,7 @@ import com.lvmaoya.blog.domain.searchParams.CommentSearchParams;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.service.CommentService;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,8 +16,8 @@ public class CommentController {
     private CommentService commentService;
 
     @PostMapping
-    public R addOrUpdateComment(@RequestBody Comment comment) {
-        return commentService.addOrUpdateComment(comment);
+    public R addOrUpdateComment(@RequestBody Comment comment, HttpServletRequest request) {
+        return commentService.addOrUpdateComment(comment, request);
     }
     @PostMapping("/list")
     public R getCommentList(@RequestBody CommentSearchParams commentSearchParams) {

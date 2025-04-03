@@ -1,26 +1,21 @@
-package com.lvmaoya.blog.domain.vo;
+package com.lvmaoya.blog.domain.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.lvmaoya.blog.domain.entity.CommentUser;
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
 @TableName("commentary")
-public class CommentVo {
-    private Integer id;
-    private Integer articleId;
-    private Integer articleTitle;
-    private String userId;
-    private Integer rootCommentId; // 评论的根评论
-    private Integer type; // 0：文章评论，1：评论评论
-    private String to_comment_id;
-    private String content;
-    private int status;
+public class CommentUser {
+    private String id;
+    private String username;
+    private String avatar;
+    private String email;
+    private String site;
     private int deleted;
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")

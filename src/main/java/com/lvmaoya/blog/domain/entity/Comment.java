@@ -13,16 +13,12 @@ import java.util.Date;
 public class Comment {
     private Integer id;
     private Integer articleId;
-    private int type; // 0：文章评论，1：评论评论
-    private Integer rootId; // 评论的根评论
-    private Integer toUserId;
-    private String toUserName;
-    private Integer avatar;
-    private String userName;
-    private String email;
+    private String userId;
+    private Integer rootCommentId; // 评论的根评论
+    private Integer type; // 0：文章评论，1：评论评论
+    private String to_comment_id;
     private String content;
     private int status;
-    private int preferNumber;
     private int deleted;
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
