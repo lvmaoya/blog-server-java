@@ -5,15 +5,19 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lvmaoya.blog.domain.dto.CommentPostDto;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Comment;
+import com.lvmaoya.blog.domain.entity.CommentUser;
 import com.lvmaoya.blog.domain.searchParams.CommentSearchParams;
 import com.lvmaoya.blog.domain.vo.CommentVo;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.handler.exception.BusinessException;
 import com.lvmaoya.blog.mapper.BlogMapper;
 import com.lvmaoya.blog.mapper.CommentMapper;
+import com.lvmaoya.blog.mapper.CommentUserMapper;
 import com.lvmaoya.blog.service.CommentService;
+import com.lvmaoya.blog.utils.BeanCopyUtil;
 import com.lvmaoya.blog.utils.EmailUtil;
 import com.lvmaoya.blog.utils.IpUtils;
 import jakarta.annotation.Resource;
@@ -21,12 +25,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,64 +44,82 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     @Resource
     private BlogMapper blogMapper;
-
+    @Resource
+    private CommentUserMapper commentUserMapper;
     @Override
-    public R addOrUpdateComment(Comment comment, HttpServletRequest request) {
-        Blog blog = blogMapper.selectById(comment.getArticleId());
+    @Transactional
+    public R addOrUpdateComment(CommentPostDto commentPostDto, HttpServletRequest request) {
+        Blog blog = blogMapper.selectById(commentPostDto.getArticleId());
         if (blog == null) {
             throw new BusinessException(400, "没有这篇文章");
         }
+        // 获取用户的ip，到用户库里查询，如果没有该用户且该用户的name没填需要抛出异常
+        String clientIp = ipUtils.getClientIp(request);
+        CommentUser commentUser = commentUserMapper.selectById(clientIp);
+        if(Objects.isNull(commentUser) && Objects.isNull(commentPostDto.getUsername())){
+            throw new BusinessException(400, "用户名必填");
+        }
+        CommentUser commentUserInsert = BeanCopyUtil.copyBean(commentPostDto, CommentUser.class);
+        commentUserInsert.setId(clientIp);
+        commentUserMapper.insertOrUpdate(commentUserInsert);
+
         // 构建邮件内容
-        String subject = comment.getType() == 0 ?
+        String subject = commentPostDto.getType() == 0 ?
                 "LvmaoyaBlog - 您收到了新的文章评论" :
                 "LvmaoyaBlog - 您收到了新的回复";
 
         String content;
-        if (comment.getType() == 0) {
+        String toEmail;
+        if (commentPostDto.getType() == 0) {
             // 文章评论邮件
             content = String.format(
                     "尊敬的作者，\n\n" +
                             "您的文章《%s》收到了一条新的评论：\n\n" +
                             "评论内容：\n%s\n\n" +
-                            "评论人：%s\n" +
+                            "评论人：%s\n\n" +
                             "评论时间：%s\n\n" +
                             "您可以点击以下链接查看详情：\n%s\n\n" +
                             "感谢您使用LvmaoyaBlog！\n\n" +
                             "此致\n敬礼\nLvmaoyaBlog团队",
                     blog.getTitle(),
-                    comment.getContent(),
-                    comment.getUserName(),
-                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comment.getCreatedTime()),
-                    "https://lvmaoya.cn/detail/" + comment.getArticleId()
+                    commentPostDto.getContent(),
+                    commentPostDto.getUsername(),
+                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                    "https://lvmaoya.cn/detail/" + commentPostDto.getArticleId()
             );
+            toEmail = "1504734652@qq.com";
         } else {
-            // 评论回复邮件
-            Comment parentComment = commentMapper.selectById(comment.getRootId());
+            // 评论回复的那个邮件
+            Comment toComment = commentMapper.selectById(commentPostDto.getToCommentId());
+            if (Objects.isNull(toComment)){
+                throw new BusinessException(400, "未找到评论对象");
+            }
+            CommentUser toCommentUser = commentUserMapper.selectById(toComment.getUserId());
+
             content = String.format(
                     "尊敬的%s，\n\n" +
                             "您在文章《%s》中的评论收到了新的回复：\n\n" +
                             "您的原评论：\n%s\n\n" +
                             "回复内容：\n%s\n\n" +
-                            "回复人：%s\n" +
                             "回复时间：%s\n\n" +
                             "您可以点击以下链接查看详情：\n%s\n\n" +
                             "感谢您使用LvmaoyaBlog！\n\n" +
                             "此致\n敬礼\nLvmaoyaBlog团队",
-                    comment.getUserName(),
+                    toCommentUser.getUsername(),
                     blog.getTitle(),
-                    parentComment.getContent(),
-                    comment.getContent(),
-                    comment.getUserName(),
-                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(comment.getCreatedTime()),
-                    "https://lvmaoya.cn/detail/" + comment.getArticleId()
+                    toComment.getContent(),
+                    commentPostDto.getContent(),
+                    new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                    "https://lvmaoya.cn/detail/" + commentPostDto.getArticleId()
             );
+            toEmail = toCommentUser.getEmail();
         }
+        Comment comment = BeanCopyUtil.copyBean(commentPostDto, Comment.class);
+        comment.setUserId(clientIp);
+        commentMapper.insertOrUpdate(comment);
 
-        // 发送邮件（这里假设是发给管理员或文章作者）
-        String toEmail = "admin@lvmaoya.com"; // 或从文章/用户信息中获取
         emailUtil.sendGeneralEmail(subject, content, toEmail);
-
-        return R.success(commentMapper.insertOrUpdate(comment));
+        return R.success();
     }
 
     @Override

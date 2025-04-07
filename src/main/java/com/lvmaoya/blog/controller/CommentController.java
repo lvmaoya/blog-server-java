@@ -1,5 +1,6 @@
 package com.lvmaoya.blog.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.lvmaoya.blog.domain.dto.CommentPostDto;
 import com.lvmaoya.blog.domain.entity.Comment;
 import com.lvmaoya.blog.domain.searchParams.CommentSearchParams;
 import com.lvmaoya.blog.domain.vo.R;
@@ -16,8 +17,8 @@ public class CommentController {
     private CommentService commentService;
 
     @PostMapping
-    public R addOrUpdateComment(@RequestBody Comment comment, HttpServletRequest request) {
-        return commentService.addOrUpdateComment(comment, request);
+    public R addOrUpdateComment(@RequestBody CommentPostDto commentPostDto, HttpServletRequest request) {
+        return commentService.addOrUpdateComment(commentPostDto, request);
     }
     @PostMapping("/list")
     public R getCommentList(@RequestBody CommentSearchParams commentSearchParams) {

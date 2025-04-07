@@ -32,7 +32,7 @@ public class EmailUtil {
      */
     @SneakyThrows(Exception.class)
     @Async("taskExecutor")
-    public boolean sendGeneralEmail(String subject, String content, String... to){
+    public void sendGeneralEmail(String subject, String content, String... to){
         // 创建邮件消息
         org.springframework.mail.SimpleMailMessage message = new org.springframework.mail.SimpleMailMessage();
         message.setFrom(from);
@@ -45,8 +45,6 @@ public class EmailUtil {
 
         // 发送邮件
         mailSender.send(message);
-
-        return true;
     }
     /**
      * 发送html的邮件

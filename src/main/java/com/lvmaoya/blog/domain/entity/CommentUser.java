@@ -9,7 +9,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-@TableName("commentary")
+@TableName("commentary_user")
 public class CommentUser {
     private String id;
     private String username;

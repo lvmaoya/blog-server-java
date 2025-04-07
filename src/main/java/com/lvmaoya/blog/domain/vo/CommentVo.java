@@ -14,11 +14,10 @@ import java.util.Date;
 public class CommentVo {
     private Integer id;
     private Integer articleId;
-    private Integer articleTitle;
-    private String userId;
+    private String articleTitle;
     private Integer rootCommentId; // 评论的根评论
     private Integer type; // 0：文章评论，1：评论评论
-    private String to_comment_id;
+    private String toCommentId;
     private String content;
     private int status;
     private int deleted;

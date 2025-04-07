@@ -12,11 +12,11 @@ import java.util.Date;
 public class CommentPostDto {
     private Integer id;
     private Integer articleId;
-    private Integer rootId; // 评论的根评论
-    private Integer toUserId;
-    private String toUserName;
-    private Integer avatar;
-    private String userName;
+    private Integer rootCommentId;
+    private Integer type;
+    private String toCommentId;
+    private String avatar;
+    private String username;
     private String email;
     private String site;
     private String content;
