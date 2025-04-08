@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lvmaoya.blog.domain.dto.CommentPostDto;
+import com.lvmaoya.blog.domain.dto.UpdateCommentStatusDto;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Comment;
 import com.lvmaoya.blog.domain.entity.CommentUser;
@@ -128,32 +129,53 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         int size = commentSearchParams.getSize() == null ? 20 : commentSearchParams.getSize();
 
         LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Objects.nonNull(commentSearchParams.getArticleId()),Comment::getArticleId, commentSearchParams.getArticleId());
-        queryWrapper.eq(Objects.nonNull(commentSearchParams.getStatus()),Comment::getStatus, commentSearchParams.getStatus());
+        queryWrapper.eq(Objects.nonNull(commentSearchParams.getArticleId()), Comment::getArticleId, commentSearchParams.getArticleId());
+        queryWrapper.eq(Objects.nonNull(commentSearchParams.getStatus()), Comment::getStatus, commentSearchParams.getStatus());
 
-        IPage<Comment> iPage = new Page<>(page,size);
+        IPage<Comment> iPage = new Page<>(page, size);
         IPage<Comment> commentPage = commentMapper.selectPage(iPage, queryWrapper);
-        // 提取所有文章ID
+
+        // Extract all article IDs
         Set<Integer> articleIds = commentPage.getRecords().stream()
                 .map(Comment::getArticleId)
                 .collect(Collectors.toSet());
 
-        // 批量查询文章
+        // Extract all user IDs (assuming Comment has a userId field)
+        Set<String> userIds = commentPage.getRecords().stream()
+                .map(Comment::getUserId) // Make sure Comment has this field
+                .collect(Collectors.toSet());
+
+        // Batch query articles
         Map<Integer, String> articleTitleMap = blogMapper.selectBatchIds(articleIds)
                 .stream()
                 .collect(Collectors.toMap(Blog::getId, Blog::getTitle));
 
-        // 转换为DTO
+        // Batch query users
+        Map<String, CommentUser> userMap = commentUserMapper.selectBatchIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(CommentUser::getId, user -> user));
+
+        // Convert to DTO
         List<CommentVo> vos = commentPage.getRecords().stream()
                 .map(comment -> {
                     CommentVo vo = new CommentVo();
                     BeanUtils.copyProperties(comment, vo);
                     vo.setArticleTitle(articleTitleMap.get(comment.getArticleId()));
+
+                    // Set user information
+                    CommentUser user = userMap.get(comment.getUserId());
+                    if (user != null) {
+                        vo.setUsername(user.getUsername());
+                        vo.setAvatar(user.getAvatar());
+                        vo.setEmail(user.getEmail());
+                        vo.setSite(user.getSite());
+                    }
+
                     return vo;
                 })
                 .collect(Collectors.toList());
 
-        // 构建返回分页对象
+        // Build return page object
         Page<CommentVo> resultPage = new Page<>(
                 commentPage.getCurrent(),
                 commentPage.getSize(),
@@ -162,5 +184,24 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         resultPage.setRecords(vos);
 
         return R.success(resultPage);
+    }
+
+    @Override
+    public R updateCommentStatus(UpdateCommentStatusDto dto) {
+        // Check if comment exists
+        Comment comment = commentMapper.selectById(dto.getCommentId());
+        if (comment == null) {
+            return R.error(400,"评论不存在");
+        }
+
+        // Update status
+        comment.setStatus(dto.getStatus());
+        int result = commentMapper.updateById(comment);
+
+        if (result > 0) {
+            return R.success("状态更新成功");
+        } else {
+            return R.error(400,"状态更新失败");
+        }
     }
 }

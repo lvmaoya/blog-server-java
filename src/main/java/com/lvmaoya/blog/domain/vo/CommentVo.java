@@ -15,12 +15,19 @@ public class CommentVo {
     private Integer id;
     private Integer articleId;
     private String articleTitle;
-    private Integer rootCommentId; // 评论的根评论
-    private Integer type; // 0：文章评论，1：评论评论
+    private Integer rootCommentId;
+    private Integer type;
     private String toCommentId;
     private String content;
     private int status;
     private int deleted;
+
+    // User information fields
+    private String username;
+    private String avatar;
+    private String email;
+    private String site;
+
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date createdTime;
