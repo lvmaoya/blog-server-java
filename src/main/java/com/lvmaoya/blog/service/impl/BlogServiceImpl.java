@@ -45,6 +45,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         int page = blogListSearchParams.getPage() == null ? 1 : blogListSearchParams.getPage();
         int size = blogListSearchParams.getSize() == null ? 10 : blogListSearchParams.getSize();
         String sortBy = blogListSearchParams.getSortBy();
+        String sortOrder = blogListSearchParams.getSortOrder(); // 新增的排序方向参数
         String category = blogListSearchParams.getCategory();
         String status = blogListSearchParams.getStatus();
         String title = blogListSearchParams.getTitle();
@@ -53,49 +54,65 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         Date publishedEnd = blogListSearchParams.getPublishedEnd();
 
         LambdaQueryWrapper<Blog> queryWrapper = new LambdaQueryWrapper<>();
-        // 排序：默认根据时间排序
+
+        // 排序逻辑（修改后）
         if (StringUtils.isNotBlank(sortBy)) {
-            if(sortBy.equals("publishedTime")){
-                queryWrapper.orderByDesc(Blog::getPublishedTime);
-            }else if (sortBy.equals("top")){
-                queryWrapper.orderByDesc(Blog::getTop);
+            boolean isAsc = StringUtils.isNotBlank(sortOrder) && "asc".equalsIgnoreCase(sortOrder);
+
+            if (sortBy.equals("publishedTime")) {
+                if (isAsc) {
+                    queryWrapper.orderByAsc(Blog::getPublishedTime);
+                } else {
+                    queryWrapper.orderByDesc(Blog::getPublishedTime); // 默认降序
+                }
+            } else if (sortBy.equals("top")) {
+                if (isAsc) {
+                    queryWrapper.orderByAsc(Blog::getTop);
+                } else {
+                    queryWrapper.orderByDesc(Blog::getTop); // 默认降序
+                }
             }
+            // 可以继续添加其他排序字段...
+        } else {
+            // 默认排序（如果没有指定排序字段）
+            queryWrapper.orderByDesc(Blog::getPublishedTime);
         }
-        // 筛选
+
+        // 原有筛选条件保持不变...
         queryWrapper.eq(StringUtils.isNotBlank(status), Blog::getStatus, status);
         queryWrapper.eq(StringUtils.isNotBlank(category), Blog::getFatherCategoryId, category);
         queryWrapper.like(StringUtils.isNotBlank(title), Blog::getTitle, title);
-        queryWrapper.like(StringUtils.isNotBlank(keywords),Blog::getDescription,keywords);
-        if (publishedStart!= null && publishedEnd!= null) {
+        queryWrapper.like(StringUtils.isNotBlank(keywords), Blog::getDescription, keywords);
+
+        if (publishedStart != null && publishedEnd != null) {
             queryWrapper.between(Blog::getPublishedTime, publishedStart, publishedEnd);
-        } else if (publishedStart!= null) {
+        } else if (publishedStart != null) {
             queryWrapper.ge(Blog::getPublishedTime, publishedStart);
-        } else if (publishedEnd!= null) {
+        } else if (publishedEnd != null) {
             queryWrapper.le(Blog::getPublishedTime, publishedEnd);
         }
 
-        // 分页
+        // 分页查询
         Page<Blog> pageObj = new Page<>(page, size);
-        List<Blog> blogList = blogMapper.selectList(pageObj, queryWrapper);
+        IPage<Blog> blogPage = blogMapper.selectPage(pageObj, queryWrapper);
 
-        // 获取文章分类信息
-        List<BlogVo> blogVos = BeanCopyUtil.copyBeanList(blogList, BlogVo.class);
+        // 转换VO并设置分类信息
+        List<BlogVo> blogVos = BeanCopyUtil.copyBeanList(blogPage.getRecords(), BlogVo.class);
         for (BlogVo item : blogVos) {
             Category c = categoryService.getById(item.getCategoryId());
             item.setCategory(c);
         }
 
-        //使用stream实现
+        // 构建返回的分页对象
         Page<BlogVo> pageVo = new Page<>();
-        pageVo.setSize(pageObj.getSize());
-        pageVo.setTotal(pageObj.getTotal());
+        pageVo.setSize(blogPage.getSize());
+        pageVo.setTotal(blogPage.getTotal());
         pageVo.setRecords(blogVos);
-        pageVo.setPages(pageObj.getPages());
-        pageVo.setCurrent(pageObj.getCurrent());
+        pageVo.setPages(blogPage.getPages());
+        pageVo.setCurrent(blogPage.getCurrent());
 
         return R.success(pageVo);
-    };
-
+    }
     public R getBlogById(String id) {
         Blog blog = blogMapper.selectById(id);
         if(blog == null){
