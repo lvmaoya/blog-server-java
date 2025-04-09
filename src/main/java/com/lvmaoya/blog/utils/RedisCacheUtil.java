@@ -2,6 +2,8 @@ package com.lvmaoya.blog.utils;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -46,5 +48,30 @@ public class RedisCacheUtil {
     // 获取key剩余的过期时间（单位：秒），返回 -1表示永久有效，-2表示不存在
     public long getExpire(String key, TimeUnit unit) {
         return redisTemplate.getExpire(key, unit);
+    }
+
+    // Set集合操作扩展
+    public void addToSet(String key, Object value) {
+        redisTemplate.opsForSet().add(key, value);
+    }
+
+    public Long getSetSize(String key) {
+        return redisTemplate.opsForSet().size(key);
+    }
+
+    public void removeFromSet(String key, Object value) {
+        redisTemplate.opsForSet().remove(key, value);
+    }
+
+    public Set<Object> getSetMembers(String key) {
+        return redisTemplate.opsForSet().members(key);
+    }
+
+    // 批量删除
+    public void deleteKeys(String pattern) {
+        Set<String> keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+        }
     }
 }

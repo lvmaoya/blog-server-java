@@ -142,12 +142,16 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
             blogMapper.insert(blog);
             // 获取插入后的文章id
             Integer id = blog.getId();
-            BlogContent blogContent = new BlogContent(id, blogVo.getContent());
+            BlogContent blogContent = new BlogContent();
+            blogContent.setContent(blogVo.getContent());
+            blogContent.setId(id);
             res = blogContentMapper.insert(blogContent);
         }else {
             blogMapper.updateById(blog);
             Integer id = blog.getId();
-            BlogContent blogContent = new BlogContent(id, blogVo.getContent());
+            BlogContent blogContent = new BlogContent();
+            blogContent.setContent(blogVo.getContent());
+            blogContent.setId(id);
             res = blogContentMapper.updateById(blogContent);
         }
         // 异步生成摘要
@@ -155,8 +159,6 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 //        asyncBlogService.updateBlog(blog.getId());
         return R.success(res > 0);
     }
-
-
     @Transactional
     public R setTop(String id) {
         Blog blog = blogMapper.selectById(id);
