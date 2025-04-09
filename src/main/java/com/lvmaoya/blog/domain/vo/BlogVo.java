@@ -24,7 +24,7 @@ public class BlogVo {
     private Integer fatherCategoryId;
     private String coverImage;
     private String content;
-    private Long chatCount;
+    private Long charCount;
     private int pageView;
     private int preferNum;
     private int status;

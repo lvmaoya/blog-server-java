@@ -23,7 +23,7 @@ public class Blog {
     private String coverImage;
     private int pageView;
     private int preferNum;
-    private Long chatCount;
+    private Long charCount;
     private int status;
     private Integer authorId;
     private int top;
