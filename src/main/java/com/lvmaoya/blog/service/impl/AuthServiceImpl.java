@@ -40,9 +40,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public R login(String username, String password) {
-
-
-
         // 1. 使用authenticationManager来完成用户的认证，默认是没有这个Bean的，所以需要在配置类中来注入
         // 2. 调用authenticationManager.authenticate完成认证，默认使用UserDetail生成的账号而不是使用来自于自己数据库中的账号密码数据，所有需要重写其认证实现接口
 

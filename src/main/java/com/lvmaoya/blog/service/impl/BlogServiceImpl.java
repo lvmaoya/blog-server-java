@@ -22,6 +22,7 @@ import jakarta.annotation.Resource;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
@@ -41,77 +44,83 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Resource
     private AsyncBlogService asyncBlogService;
     @Override
-    public R blogList(BlogListSearchParams blogListSearchParams) {
-        int page = blogListSearchParams.getPage() == null ? 1 : blogListSearchParams.getPage();
-        int size = blogListSearchParams.getSize() == null ? 10 : blogListSearchParams.getSize();
-        String sortBy = blogListSearchParams.getSortBy();
-        String sortOrder = blogListSearchParams.getSortOrder(); // 新增的排序方向参数
-        String category = blogListSearchParams.getCategory();
-        String status = blogListSearchParams.getStatus();
-        String title = blogListSearchParams.getTitle();
-        String keywords = blogListSearchParams.getKeywords();
-        Date publishedStart = blogListSearchParams.getPublishedStart();
-        Date publishedEnd = blogListSearchParams.getPublishedEnd();
+    public R blogList(BlogListSearchParams params) {
+        // 1. 分页参数处理
+        int page = Optional.ofNullable(params.getPage()).orElse(1);
+        int size = Optional.ofNullable(params.getSize()).orElse(10);
 
+        // 2. 构建查询条件
         LambdaQueryWrapper<Blog> queryWrapper = new LambdaQueryWrapper<>();
 
-        // 排序逻辑（修改后）
+        // 排序逻辑
+        applySorting(queryWrapper, params.getSortBy(), params.getSortOrder());
+
+        // 筛选条件
+        applyFilters(queryWrapper, params);
+
+        // 3. 执行分页查询
+        IPage<Blog> blogPage = blogMapper.selectPage(new Page<>(page, size), queryWrapper);
+
+        // 4. 转换结果
+        Page<BlogVo> resultPage = convertToVoPage(blogPage);
+
+        return R.success(resultPage);
+    }
+
+    // 排序逻辑抽取
+    private void applySorting(LambdaQueryWrapper<Blog> wrapper, String sortBy, String sortOrder) {
         if (StringUtils.isNotBlank(sortBy)) {
             boolean isAsc = StringUtils.isNotBlank(sortOrder) && "asc".equalsIgnoreCase(sortOrder);
-
-            if (sortBy.equals("publishedTime")) {
-                if (isAsc) {
-                    queryWrapper.orderByAsc(Blog::getPublishedTime);
-                } else {
-                    queryWrapper.orderByDesc(Blog::getPublishedTime); // 默认降序
-                }
-            } else if (sortBy.equals("top")) {
-                if (isAsc) {
-                    queryWrapper.orderByAsc(Blog::getTop);
-                } else {
-                    queryWrapper.orderByDesc(Blog::getTop); // 默认降序
-                }
+            switch (sortBy) {
+                case "publishedTime":
+                    wrapper.orderBy(isAsc, true, Blog::getPublishedTime);
+                    break;
+                case "top":
+                    wrapper.orderBy(isAsc, true, Blog::getTop);
+                    break;
+                default:
+                    wrapper.orderByDesc(Blog::getPublishedTime);
             }
-            // 可以继续添加其他排序字段...
         } else {
-            // 默认排序（如果没有指定排序字段）
-            queryWrapper.orderByDesc(Blog::getPublishedTime);
+            wrapper.orderByDesc(Blog::getPublishedTime);
         }
+    }
 
-        // 原有筛选条件保持不变...
-        queryWrapper.eq(StringUtils.isNotBlank(status), Blog::getStatus, status);
-        queryWrapper.eq(StringUtils.isNotBlank(category), Blog::getFatherCategoryId, category);
-        queryWrapper.like(StringUtils.isNotBlank(title), Blog::getTitle, title);
-        queryWrapper.like(StringUtils.isNotBlank(keywords), Blog::getDescription, keywords);
+    // 筛选条件抽取
+    private void applyFilters(LambdaQueryWrapper<Blog> wrapper, BlogListSearchParams params) {
+        wrapper.eq(StringUtils.isNotBlank(params.getStatus()), Blog::getStatus, params.getStatus())
+                .eq(StringUtils.isNotBlank(params.getCategory()), Blog::getFatherCategoryId, params.getCategory())
+                .like(StringUtils.isNotBlank(params.getTitle()), Blog::getTitle, params.getTitle())
+                .like(StringUtils.isNotBlank(params.getKeywords()), Blog::getDescription, params.getKeywords());
 
-        if (publishedStart != null && publishedEnd != null) {
-            queryWrapper.between(Blog::getPublishedTime, publishedStart, publishedEnd);
-        } else if (publishedStart != null) {
-            queryWrapper.ge(Blog::getPublishedTime, publishedStart);
-        } else if (publishedEnd != null) {
-            queryWrapper.le(Blog::getPublishedTime, publishedEnd);
+        if (params.getPublishedStart() != null || params.getPublishedEnd() != null) {
+            wrapper.between(params.getPublishedStart() != null && params.getPublishedEnd() != null,
+                            Blog::getPublishedTime,
+                            params.getPublishedStart(),
+                            params.getPublishedEnd())
+                    .ge(params.getPublishedStart() != null && params.getPublishedEnd() == null,
+                            Blog::getPublishedTime,
+                            params.getPublishedStart())
+                    .le(params.getPublishedEnd() != null && params.getPublishedStart() == null,
+                            Blog::getPublishedTime,
+                            params.getPublishedEnd());
         }
+    }
 
-        // 分页查询
-        Page<Blog> pageObj = new Page<>(page, size);
-        IPage<Blog> blogPage = blogMapper.selectPage(pageObj, queryWrapper);
+    // 结果转换抽取
+    private Page<BlogVo> convertToVoPage(IPage<Blog> blogPage) {
+        List<BlogVo> blogVos = blogPage.getRecords().stream()
+                .map(blog -> {
+                    BlogVo vo = BeanCopyUtil.copyBean(blog, BlogVo.class);
+                    vo.setCategory(categoryService.getById(blog.getCategoryId()));
+                    return vo;
+                })
+                .collect(Collectors.toList());
 
-        // 转换VO并设置分类信息
-        List<BlogVo> blogVos = BeanCopyUtil.copyBeanList(blogPage.getRecords(), BlogVo.class);
-        for (BlogVo item : blogVos) {
-            Category c = categoryService.getById(item.getCategoryId());
-            item.setCategory(c);
-        }
-
-        // 构建返回的分页对象
         Page<BlogVo> pageVo = new Page<>();
-        pageVo.setSize(blogPage.getSize());
-        pageVo.setTotal(blogPage.getTotal());
+        BeanUtils.copyProperties(blogPage, pageVo, "records");
         pageVo.setRecords(blogVos);
-        pageVo.setPages(blogPage.getPages());
-        pageVo.setCurrent(blogPage.getCurrent());
-
-        return R.success(pageVo);
+        return pageVo;
     }
     public R getBlogById(String id) {
         Blog blog = blogMapper.selectById(id);
