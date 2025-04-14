@@ -19,6 +19,7 @@ spring:
     redis:
       host: 101.43.54.84
       port: 6379
+      password: king.sun1
   ai:
     openai:
       api-key: sk-7f53157c361d497e9617d2bbfd836d5c

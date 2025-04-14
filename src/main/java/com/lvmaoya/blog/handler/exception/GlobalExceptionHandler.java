@@ -1,14 +1,57 @@
 package com.lvmaoya.blog.handler.exception;
 
 import com.lvmaoya.blog.domain.vo.R;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
+import java.nio.file.AccessDeniedException;
+import java.security.SignatureException;
+
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    /**
+     * 处理认证失败异常（如用户名密码错误）
+     */
+    @ExceptionHandler(AuthenticationException.class)
+    public R handleAuthenticationException(AuthenticationException e, HttpServletResponse response) {
+        log.warn("Authentication failed: {}", e.getMessage());
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        return R.error(HttpServletResponse.SC_UNAUTHORIZED, "认证失败: " + e.getMessage());
+    }
+
+    /**
+     * 处理登录过期或无效token异常
+     */
+    @ExceptionHandler({
+            ExpiredJwtException.class,
+            UnsupportedJwtException.class,
+            MalformedJwtException.class,
+            SignatureException.class
+    })
+    public R handleJwtException(Exception e, HttpServletResponse response) {
+        log.warn("JWT token error: {}", e.getMessage());
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        return R.error(HttpServletResponse.SC_UNAUTHORIZED, "Token无效或已过期，请重新登录");
+    }
+
+    /**
+     * 处理访问权限不足异常
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public R handleAccessDeniedException(AccessDeniedException e, HttpServletResponse response) {
+        log.warn("Access denied: {}", e.getMessage());
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        return R.error(HttpServletResponse.SC_FORBIDDEN, "权限不足，无法访问该资源");
+    }
+
 
     /**
      * 处理业务异常（如分类非空删除）
