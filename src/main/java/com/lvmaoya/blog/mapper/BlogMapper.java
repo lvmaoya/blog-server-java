@@ -10,6 +10,7 @@ import org.apache.ibatis.annotations.Select;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface BlogMapper extends BaseMapper<Blog> {
@@ -34,6 +35,30 @@ public interface BlogMapper extends BaseMapper<Blog> {
             "</script>")
     List<TimeRangeStatsDTO> countBlogStatsByTimeRange(@Param("startTime") Date startTime,
                                                          @Param("endTime") Date endTime);
+
+
+    /**
+     * 获取文章统计信息
+     * @param lastMonthStart 上个月开始时间
+     * @param lastMonthEnd 上个月结束时间
+     * @return 包含统计信息的 Map
+     */
+    @Select("SELECT " +
+            "(SELECT COUNT(*) FROM blog) AS totalBlogCount, " +
+            "(SELECT COUNT(*) FROM blog WHERE published_time BETWEEN #{lastMonthStart} AND #{lastMonthEnd}) AS lastMonthBlogCount, " +
+            "(SELECT SUM(char_count) FROM blog) AS totalCharCount, " +
+            "(SELECT SUM(char_count) FROM blog WHERE published_time BETWEEN #{lastMonthStart} AND #{lastMonthEnd}) AS lastMonthCharCount, " +
+            "(SELECT SUM(page_view) FROM blog) AS totalPageView, " +
+            "(SELECT SUM(page_view) FROM blog WHERE published_time BETWEEN #{lastMonthStart} AND #{lastMonthEnd}) AS lastMonthPageView")
+    Map<String, Object> getBlogStatistics(Date lastMonthStart, Date lastMonthEnd);
+
+
+    /**
+     * 按 fatherCategoryId 统计文章数量并返回列表
+     * @return 包含父分类 ID 和对应文章数量的列表
+     */
+    @Select("SELECT father_category_id, COUNT(*) AS count FROM blog GROUP BY father_category_id")
+    List<Map<String, Object>> getBlogCountByFatherCategoryId();
 
     @Data
     class TimeRangeStatsDTO {

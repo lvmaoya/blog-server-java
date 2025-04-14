@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Date;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/blog/stats")
@@ -28,5 +29,10 @@ public class BlogStatisticsController {
 
         BlogTimeRangeStatsVO stats = blogStatisticsService.getBlogStatsByTimeRange(startTime, endTime);
         return R.success(stats);
+    }
+
+    @GetMapping("/statistics")
+    public R<Map<String, Object>> getBlogStatistics() {
+        return R.success(blogStatisticsService.getBlogStatistics());
     }
 }
