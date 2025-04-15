@@ -20,7 +20,7 @@ public class OnlineController {
         return R.success();
     }
 
-    @GetMapping("/count")
+    @GetMapping("/online/count")
     public R getOnlineCount() {
         return R.success(onlineService.getOnlineCount());
     }

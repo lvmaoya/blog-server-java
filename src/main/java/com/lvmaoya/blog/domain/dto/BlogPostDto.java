@@ -15,6 +15,7 @@ public class BlogPostDto {
     private String description;
     private String keywords;
     private Integer categoryId;
+    private Long charCount;
     private Integer fatherCategoryId;
     private String coverImage;
     private int status;

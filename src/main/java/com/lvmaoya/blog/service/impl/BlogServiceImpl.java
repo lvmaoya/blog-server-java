@@ -145,7 +145,6 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Override
     public R saveOrUpdate(BlogPostDto blogVo) {
         Blog blog = BeanCopyUtil.copyBean(blogVo, Blog.class);
-
         int res;
         if (blogVo.getId() == null) {
             blogMapper.insert(blog);
