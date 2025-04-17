@@ -58,7 +58,7 @@ public class SecurityConfig {
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers("/login").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/captcha").permitAll()//登录和未登录的人都可以访问
-                            .requestMatchers("/*").permitAll()//登录和未登录的人都可以访问
+                            .requestMatchers("/**").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/*/*").permitAll()//登录和未登录的人都可以访问
                             .requestMatchers("/*/*/*").permitAll()//登录和未登录的人都可以访问
                             .anyRequest().authenticated()

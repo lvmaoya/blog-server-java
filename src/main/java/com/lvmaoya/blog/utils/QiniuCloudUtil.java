@@ -62,6 +62,34 @@ public class QiniuCloudUtil {
         }
         return null;
     }
+    /**
+     * 实际执行七牛云上传的方法
+     * @param data 文件数据
+     * @param fileName 文件名（包含路径）
+     * @return 文件访问URL
+     * @throws IOException
+     */
+    public String uploadFile(byte[] data, String fileName) throws IOException {
+        Configuration cfg = new Configuration(Zone.autoZone());
+        UploadManager uploadManager = new UploadManager(cfg);
+        Auth auth = Auth.create(accessKey, secretKey);
+        String upToken = auth.uploadToken(bucket);
+
+        try {
+            Response response = uploadManager.put(data, fileName, upToken);
+            DefaultPutRet putRet = response.jsonToObject(DefaultPutRet.class);
+            return domain + "/" + putRet.key;
+        } catch (QiniuException ex) {
+            Response r = ex.response;
+            System.err.println(r.toString());
+            try {
+                System.err.println(r.bodyString());
+            } catch (QiniuException ex2) {
+                //ignore
+            }
+            throw new IOException("文件上传失败", ex);
+        }
+    }
 
     // 下载文件
     public String getDownloadUrl(String key) {
