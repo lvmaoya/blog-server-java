@@ -1,12 +1,13 @@
 package com.lvmaoya.blog.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
 import java.io.Serializable;
 
 @Data
-public class User implements Serializable {
+public class User{
     private Integer id;
     private String username;
     private String password;
@@ -18,6 +19,14 @@ public class User implements Serializable {
     private String avatar;
     private String createdTime;
     private String updatedTime;
+
+    // 非数据库字段
+    @TableField(exist = false)
+
     @TableLogic
     private Integer deleted;
+
+    // 非数据库字段
+    @TableField(exist = false)
+    private Role role;
 }

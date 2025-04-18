@@ -8,7 +8,7 @@ import java.io.Serializable;
 * 用户角色关联表
  */
 @Data
-public class UserRole implements Serializable {
+public class UserRole {
 
     /**
     * 用户ID

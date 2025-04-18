@@ -7,7 +7,7 @@ import java.io.Serializable;
 * 角色权限关联表
 */
 @Data
-public class RolePermission implements Serializable {
+public class RolePermission{
 
     /**
     * 角色ID

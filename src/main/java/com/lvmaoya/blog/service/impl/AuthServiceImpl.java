@@ -2,7 +2,7 @@ package com.lvmaoya.blog.service.impl;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
-import com.lvmaoya.blog.domain.entity.LoginUser;
+import com.lvmaoya.blog.domain.entity.CustomUserDetails;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.domain.vo.UserVo;
@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         //获取userId生成token
-        LoginUser loginUser = (LoginUser)authenticate.getPrincipal();
+        CustomUserDetails loginUser = (CustomUserDetails)authenticate.getPrincipal();
         String userId = loginUser.getUser().getId().toString();
         String jwt = JwtUtil.generateToken(userId);
 

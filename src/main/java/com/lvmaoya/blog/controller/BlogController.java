@@ -8,11 +8,13 @@ import com.lvmaoya.blog.domain.vo.BlogVo;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.service.BlogService;
 import jakarta.annotation.Resource;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequestMapping("/blog")
+@PreAuthorize("hasRole('ADMIN')")
 public class BlogController {
     @Resource
     private BlogService blogService;

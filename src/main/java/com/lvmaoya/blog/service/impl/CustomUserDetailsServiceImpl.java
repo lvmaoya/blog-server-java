@@ -2,20 +2,24 @@ package com.lvmaoya.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.lvmaoya.blog.domain.entity.User;
-import com.lvmaoya.blog.domain.entity.LoginUser;
+import com.lvmaoya.blog.domain.entity.CustomUserDetails;
+import com.lvmaoya.blog.mapper.RoleMapper;
 import com.lvmaoya.blog.mapper.UserMapper;
 import jakarta.annotation.Resource;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserDetailServiceImpl implements UserDetailsService {
+@RequiredArgsConstructor
+public class CustomUserDetailsServiceImpl implements UserDetailsService {
 
     @Resource
     private UserMapper userMapper;
-
+    @Resource
+    private RoleMapper roleMapper;
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // 根据用户名查询用户信息
@@ -29,6 +33,6 @@ public class UserDetailServiceImpl implements UserDetailsService {
         }
         // 返回用户信息
         // TODO 查询用户权限
-        return new LoginUser(user);
+        return new CustomUserDetails(user);
     }
 }
