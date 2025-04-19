@@ -34,4 +34,7 @@ public class Blog {
     @TableField(fill = FieldFill.INSERT_UPDATE) //第一次插入时自动填充 更新时自动填充
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date updatedTime;
+
+    @TableField(exist = false)
+    private String categoryName; // 用于接收联表查询结果
 }

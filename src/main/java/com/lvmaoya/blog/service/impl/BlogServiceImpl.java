@@ -52,31 +52,31 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // 2. 构建查询条件
         LambdaQueryWrapper<Blog> queryWrapper = new LambdaQueryWrapper<>();
 
-        // 排序逻辑
+        // 条件筛选
+        queryWrapper.eq(StringUtils.isNotBlank(params.getStatus()), Blog::getStatus, params.getStatus())
+                .eq(StringUtils.isNotBlank(params.getCategory()), Blog::getFatherCategoryId, params.getCategory())
+                .like(StringUtils.isNotBlank(params.getTitle()), Blog::getTitle, params.getTitle())
+                .like(StringUtils.isNotBlank(params.getKeywords()), Blog::getDescription, params.getKeywords())
+                .ge(params.getPublishedStart() != null, Blog::getPublishedTime, params.getPublishedStart())
+                .le(params.getPublishedEnd() != null, Blog::getPublishedTime, params.getPublishedEnd());
+
+        // 排序处理
         applySorting(queryWrapper, params.getSortBy(), params.getSortOrder());
 
-        // 筛选条件
-        applyFilters(queryWrapper, params);
+        // 3. 执行分页查询（联表查询）
+        Page<BlogVo> blogPage = blogMapper.selectBlogWithCategoryPage(new Page<>(page, size), queryWrapper);
 
-        // 3. 执行分页查询
-        IPage<Blog> blogPage = blogMapper.selectPage(new Page<>(page, size), queryWrapper);
-
-        // 4. 转换结果
-        Page<BlogVo> resultPage = convertToVoPage(blogPage);
-
-        return R.success(resultPage);
+        return R.success(blogPage);
     }
-
-    // 排序逻辑抽取
     private void applySorting(LambdaQueryWrapper<Blog> wrapper, String sortBy, String sortOrder) {
         if (StringUtils.isNotBlank(sortBy)) {
             boolean isAsc = StringUtils.isNotBlank(sortOrder) && "asc".equalsIgnoreCase(sortOrder);
-            switch (sortBy) {
-                case "publishedTime":
-                    wrapper.orderBy(isAsc, true, Blog::getPublishedTime);
+            switch (sortBy.toLowerCase()) {
+                case "publishedtime":
+                    wrapper.orderBy(true, isAsc, Blog::getPublishedTime);
                     break;
                 case "top":
-                    wrapper.orderBy(isAsc, true, Blog::getTop);
+                    wrapper.orderBy(true, isAsc, Blog::getTop);
                     break;
                 default:
                     wrapper.orderByDesc(Blog::getPublishedTime);
@@ -86,39 +86,19 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         }
     }
 
-    // 筛选条件抽取
-    private void applyFilters(LambdaQueryWrapper<Blog> wrapper, BlogListSearchParams params) {
-        wrapper.eq(StringUtils.isNotBlank(params.getStatus()), Blog::getStatus, params.getStatus())
-                .eq(StringUtils.isNotBlank(params.getCategory()), Blog::getFatherCategoryId, params.getCategory())
-                .like(StringUtils.isNotBlank(params.getTitle()), Blog::getTitle, params.getTitle())
-                .like(StringUtils.isNotBlank(params.getKeywords()), Blog::getDescription, params.getKeywords());
+    private Page<BlogVo> convertToVoPage(Page<Blog> blogPage) {
+        Page<BlogVo> pageVo = new Page<>();
+        BeanUtils.copyProperties(blogPage, pageVo, "records");
 
-        if (params.getPublishedStart() != null || params.getPublishedEnd() != null) {
-            wrapper.between(params.getPublishedStart() != null && params.getPublishedEnd() != null,
-                            Blog::getPublishedTime,
-                            params.getPublishedStart(),
-                            params.getPublishedEnd())
-                    .ge(params.getPublishedStart() != null && params.getPublishedEnd() == null,
-                            Blog::getPublishedTime,
-                            params.getPublishedStart())
-                    .le(params.getPublishedEnd() != null && params.getPublishedStart() == null,
-                            Blog::getPublishedTime,
-                            params.getPublishedEnd());
-        }
-    }
-
-    // 结果转换抽取
-    private Page<BlogVo> convertToVoPage(IPage<Blog> blogPage) {
         List<BlogVo> blogVos = blogPage.getRecords().stream()
                 .map(blog -> {
                     BlogVo vo = BeanCopyUtil.copyBean(blog, BlogVo.class);
-                    vo.setCategory(categoryService.getById(blog.getCategoryId()));
+                    // 已经通过联表查询获取了category_name，可以直接设置
+                    vo.setCategory(new Category(blog.getCategoryId(), blog.getCategoryName()));
                     return vo;
                 })
                 .collect(Collectors.toList());
 
-        Page<BlogVo> pageVo = new Page<>();
-        BeanUtils.copyProperties(blogPage, pageVo, "records");
         pageVo.setRecords(blogVos);
         return pageVo;
     }

@@ -73,8 +73,6 @@ public class SecurityConfig {
                     // 会话管理配置
                     .sessionManagement(session -> session
                             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                            .maximumSessions(1)
-                            .maxSessionsPreventsLogin(true)
                     )
 // 异常处理
                     .exceptionHandling(exception -> exception

@@ -58,6 +58,8 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         // 从redis中获取用户
         CustomUserDetails customUserDetails = (CustomUserDetails) redisCacheUtil.get("blogLogin" + userId);
 
+        System.out.println(customUserDetails.getUsername());
+
         // 如何没有这个用户，说明登录过期，提示重新登录
         if(Objects.isNull(customUserDetails)){
            WebUtil.renderForbidden(response);

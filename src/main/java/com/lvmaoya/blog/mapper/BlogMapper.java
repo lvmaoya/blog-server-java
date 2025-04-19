@@ -1,12 +1,14 @@
 package com.lvmaoya.blog.mapper;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.vo.BlogTimeRangeStatsVO;
+import com.lvmaoya.blog.domain.vo.BlogVo;
 import lombok.Data;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 
 import java.util.Date;
 import java.util.List;
@@ -59,6 +61,20 @@ public interface BlogMapper extends BaseMapper<Blog> {
      */
     @Select("SELECT father_category_id, COUNT(*) AS count FROM blog GROUP BY father_category_id")
     List<Map<String, Object>> getBlogCountByFatherCategoryId();
+
+    @Results({
+            @Result(property = "id", column = "id"),
+            @Result(property = "category.id", column = "category_id"),
+            @Result(property = "category.categoryName", column = "category_name"),
+            @Result(property = "category.fatherCategoryId", column = "father_category_id"),
+            // 同时映射单独的categoryId和fatherCategoryId字段
+            @Result(property = "categoryId", column = "category_id"),
+            @Result(property = "fatherCategoryId", column = "father_category_id")
+    })
+    @Select("SELECT b.*, c.category_name " +
+            "FROM blog b " +
+            "LEFT JOIN category c ON b.category_id = c.id ${ew.customSqlSegment}")
+    Page<BlogVo> selectBlogWithCategoryPage(Page<Blog> page, @Param(Constants.WRAPPER) Wrapper<Blog> wrapper);
 
     @Data
     class TimeRangeStatsDTO {

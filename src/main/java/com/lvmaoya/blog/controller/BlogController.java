@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/blog")
-@PreAuthorize("hasRole('ADMIN1')")
+@PreAuthorize("hasRole('ADMIN')")
 public class BlogController {
     @Resource
     private BlogService blogService;
