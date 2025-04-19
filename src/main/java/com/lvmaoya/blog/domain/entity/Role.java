@@ -10,7 +10,7 @@ import java.util.List;
 * 角色表
  */
 @Data
-public class Role{
+public class Role  implements Serializable {
 
     /**
     * 角色ID主键

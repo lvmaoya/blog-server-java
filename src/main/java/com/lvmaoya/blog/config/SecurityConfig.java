@@ -18,10 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
@@ -31,9 +28,9 @@ public class SecurityConfig {
     @Resource
     private JwtAuthenticationTokenFilter jwtAuthenticationTokenFilter;
     @Resource
-    private AccessDeniedHandler accessDeniedHandler;
-    @Resource
     private AuthenticationEntryPoint authenticationEntryPoint;
+    @Resource
+    private AccessDeniedHandler accessDeniedHandler;
     @Resource
     private UserDetailsService userDetailsService;
     @Resource
@@ -79,7 +76,11 @@ public class SecurityConfig {
                             .maximumSessions(1)
                             .maxSessionsPreventsLogin(true)
                     )
-
+// 异常处理
+                    .exceptionHandling(exception -> exception
+                            .accessDeniedHandler(accessDeniedHandler)
+                            .authenticationEntryPoint(authenticationEntryPoint)
+                    )
                     // 授权配置
                     .authorizeHttpRequests(auth -> auth
                             // 公开访问的端点
@@ -92,26 +93,20 @@ public class SecurityConfig {
                             ).permitAll()
 
                             // 角色权限控制
-                            .requestMatchers("/admin/**").hasRole("ADMIN")
-                            .requestMatchers("/user/**").hasAnyRole("ADMIN", "USER")
+//                            .requestMatchers("/blog/**").hasRole("ADMIN1")
+//                            .requestMatchers("/user/**").hasAnyRole("ADMIN", "USER")
 
                             // 其他请求需要认证
                             .anyRequest().authenticated()
                     )
 
-                    // 异常处理
-                    .exceptionHandling(exception -> exception
-                            .accessDeniedHandler(accessDeniedHandler)
-                            .authenticationEntryPoint(authenticationEntryPoint)
-                    )
+
 
                     // 添加自定义过滤器
                     .addFilterBefore(jwtAuthenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
                     .addFilterBefore(corsFilter, JwtAuthenticationTokenFilter.class)
-
                     // 认证提供者
                     .authenticationProvider(authenticationProvider());
-
         return http.build();
     }
     /**

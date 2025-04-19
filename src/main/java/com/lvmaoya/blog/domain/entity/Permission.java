@@ -8,7 +8,7 @@ import java.io.Serializable;
 * 角色表
  */
 @Data
-public class Permission{
+public class Permission implements Serializable {
 
     /**
     * 角色ID主键
@@ -17,5 +17,5 @@ public class Permission{
     /**
     * 角色名
     */
-    private String permission_name;
+    private String permissionName;
 }

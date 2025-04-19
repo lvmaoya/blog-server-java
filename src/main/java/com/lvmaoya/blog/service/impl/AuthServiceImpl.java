@@ -51,17 +51,17 @@ public class AuthServiceImpl implements AuthService {
         }
 
         //获取userId生成token
-        CustomUserDetails loginUser = (CustomUserDetails)authenticate.getPrincipal();
-        String userId = loginUser.getUser().getId().toString();
+        CustomUserDetails customUserDetails = (CustomUserDetails)authenticate.getPrincipal();
+        String userId = customUserDetails.getUser().getId().toString();
         String jwt = JwtUtil.generateToken(userId);
 
-        UserVo userVo = BeanCopyUtil.copyBean(loginUser.getUser(), UserVo.class);
+        UserVo userVo = BeanCopyUtil.copyBean(customUserDetails.getUser(), UserVo.class);
         LoginUserVo loginUserVo = new LoginUserVo(jwt,userVo);
 
         //把用户信息存入redis
 
-        redisCacheUtil.set("blogLogin"+userId, loginUserVo);
-        System.out.println(redisCacheUtil.get("blogLogin"+userId));;
+        redisCacheUtil.set("blogLogin"+ userId, customUserDetails);
+        System.out.println(redisCacheUtil.get("blogLogin"+userId));
 
         //把token和user封装、返回
 
@@ -72,8 +72,8 @@ public class AuthServiceImpl implements AuthService {
     public R logout() {
         // 解析token获取到用户
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        LoginUserVo user = (LoginUserVo)authentication.getPrincipal();
-        Integer id = user.getUser().getId();
+        CustomUserDetails customUserDetails = (CustomUserDetails)authentication.getPrincipal();
+        Integer id = customUserDetails.getUser().getId();
 
         // 删除redis登录
         redisCacheUtil.delete("blogLogin"+id);

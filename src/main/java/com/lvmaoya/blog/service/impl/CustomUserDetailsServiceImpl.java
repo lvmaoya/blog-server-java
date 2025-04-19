@@ -1,6 +1,7 @@
 package com.lvmaoya.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.lvmaoya.blog.domain.entity.Role;
 import com.lvmaoya.blog.domain.entity.User;
 import com.lvmaoya.blog.domain.entity.CustomUserDetails;
 import com.lvmaoya.blog.mapper.RoleMapper;
@@ -11,6 +12,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,10 @@ public class CustomUserDetailsServiceImpl implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException(username);
         }
+        // 2. 查询用户角色及权限
+        List<Role> roles = userMapper.selectRolesByUserId(user.getId());
+        user.setRoles(roles);
+
         // 返回用户信息
         // TODO 查询用户权限
         return new CustomUserDetails(user);

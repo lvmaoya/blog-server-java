@@ -1,16 +1,18 @@
 package com.lvmaoya.blog.domain.entity;
 
+import lombok.Data;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
-public class CustomUserDetails implements UserDetails {
+@Data
+public class CustomUserDetails implements UserDetails, Serializable {
 
     private final User user;
 
@@ -22,14 +24,16 @@ public class CustomUserDetails implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
 
-        if (user.getRole() != null) {
-            // 添加角色
-            authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole().getRoleName()));
+        if (user.getRoles() != null) {
+            for (Role role : user.getRoles()) {
+                // 添加角色（前缀ROLE_是Spring Security的要求）
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleName()));
 
-            // 添加权限
-            if (user.getRole().getPermissions() != null) {
-                for (Permission permission : user.getRole().getPermissions()) {
-                    authorities.add(new SimpleGrantedAuthority(permission.getPermission_name()));
+                // 添加权限
+                if (role.getPermissions() != null) {
+                    for (Permission permission : role.getPermissions()) {
+                        authorities.add(new SimpleGrantedAuthority(permission.getPermissionName()));
+                    }
                 }
             }
         }
@@ -45,20 +49,5 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public String getUsername() {
         return user.getUsername();
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
     }
 }

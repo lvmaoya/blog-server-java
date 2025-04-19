@@ -1,5 +1,6 @@
 package com.lvmaoya.blog.filter;
 
+import com.lvmaoya.blog.domain.entity.CustomUserDetails;
 import com.lvmaoya.blog.domain.vo.LoginUserVo;
 import com.lvmaoya.blog.utils.JwtUtil;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
@@ -55,17 +56,17 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
 
         // 从redis中获取用户
-        LoginUserVo loginUser = (LoginUserVo) redisCacheUtil.get("blogLogin" + userId);
+        CustomUserDetails customUserDetails = (CustomUserDetails) redisCacheUtil.get("blogLogin" + userId);
 
         // 如何没有这个用户，说明登录过期，提示重新登录
-        if(Objects.isNull(loginUser)){
+        if(Objects.isNull(customUserDetails)){
            WebUtil.renderForbidden(response);
             // token 超时、非法
             return;
         }
 
         //存入SecurityContextHolder中
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(loginUser, null, null);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
         // 放行
         filterChain.doFilter(request, response);

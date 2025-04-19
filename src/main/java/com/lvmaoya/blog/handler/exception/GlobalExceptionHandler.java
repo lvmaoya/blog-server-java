@@ -6,6 +6,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -92,5 +93,10 @@ public class GlobalExceptionHandler {
         log.error("General Exception occurred: ", e);
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         return e.getMessage();
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public Object handleAuthorizationDeniedException(AuthorizationDeniedException e, HttpServletResponse response) {
+        throw e;
     }
 }
