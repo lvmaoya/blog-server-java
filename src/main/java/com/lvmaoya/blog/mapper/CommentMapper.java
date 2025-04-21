@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.*;
 public interface CommentMapper extends BaseMapper<Comment> {
     @Select("<script>" +
             "SELECT c.*, b.title AS article_title, u.username, u.avatar, u.email, u.site " +
-            "FROM comment c " +
+            "FROM commentary c " +
             "LEFT JOIN blog b ON c.article_id = b.id AND b.deleted = 0 " +
             "LEFT JOIN comment_user u ON c.user_id = u.id " +
             "<where>" +

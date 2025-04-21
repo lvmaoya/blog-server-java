@@ -164,4 +164,21 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // 如果需要更复杂的置顶逻辑(如优先级)，可以在这里扩展
         return R.success();
     }
+    @Transactional
+    public R setDisable(String id) {
+        Blog blog = blogMapper.selectById(id);
+        // 取消置顶
+        if (blog.getStatus() == 0) {
+            blog.setStatus(1);
+            blogMapper.updateById(blog);
+            return R.success();
+        }
+
+        // 设置置顶
+        blog.setStatus(0);
+        blogMapper.updateById(blog);
+
+        // 如果需要更复杂的置顶逻辑(如优先级)，可以在这里扩展
+        return R.success();
+    }
 }

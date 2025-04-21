@@ -29,7 +29,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         if (category == null) {
             R.success();
         }else{
-            if(Objects.equals(category.getFatherCategoryId(),null)){
+            if(Objects.equals(category.getFatherCategoryId(), category.getId())){
                 throw new BusinessException(400, "此类不可删除");
             }
         }

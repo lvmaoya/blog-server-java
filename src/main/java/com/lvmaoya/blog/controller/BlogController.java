@@ -43,4 +43,9 @@ public class BlogController {
     public R setTop(@PathVariable String id) {
         return blogService.setTop(id);
     }
+
+    @PutMapping("/{id}/disable")
+    public R disable(@PathVariable String id) {
+        return blogService.setDisable(id);
+    }
 }

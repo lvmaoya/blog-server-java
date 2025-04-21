@@ -15,4 +15,6 @@ public interface BlogService extends IService<Blog> {
     R saveOrUpdate(BlogPostDto blogVo);
 
     R setTop(String id);
+
+    R setDisable(String id);
 }
