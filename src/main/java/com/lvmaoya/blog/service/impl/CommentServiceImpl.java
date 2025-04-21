@@ -124,66 +124,16 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     }
 
     @Override
-    public R selectList(CommentSearchParams commentSearchParams) {
-        int page = commentSearchParams.getPage() == null ? 1 : commentSearchParams.getPage();
-        int size = commentSearchParams.getSize() == null ? 20 : commentSearchParams.getSize();
+    public R selectList(CommentSearchParams params) {
+        int pageNum = params.getPage() == null ? 1 : params.getPage();
+        int pageSize = params.getSize() == null ? 20 : params.getSize();
 
-        LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Objects.nonNull(commentSearchParams.getArticleId()), Comment::getArticleId, commentSearchParams.getArticleId());
-        queryWrapper.eq(Objects.nonNull(commentSearchParams.getStatus()), Comment::getStatus, commentSearchParams.getStatus());
-
-        IPage<Comment> iPage = new Page<>(page, size);
-        IPage<Comment> commentPage = commentMapper.selectPage(iPage, queryWrapper);
-
-        // Extract all article IDs
-        Set<Integer> articleIds = commentPage.getRecords().stream()
-                .map(Comment::getArticleId)
-                .collect(Collectors.toSet());
-
-        // Extract all user IDs (assuming Comment has a userId field)
-        Set<String> userIds = commentPage.getRecords().stream()
-                .map(Comment::getUserId) // Make sure Comment has this field
-                .collect(Collectors.toSet());
-
-        // Batch query articles
-        Map<Integer, String> articleTitleMap = blogMapper.selectBatchIds(articleIds)
-                .stream()
-                .collect(Collectors.toMap(Blog::getId, Blog::getTitle));
-
-        // Batch query users
-        Map<String, CommentUser> userMap = commentUserMapper.selectBatchIds(userIds)
-                .stream()
-                .collect(Collectors.toMap(CommentUser::getId, user -> user));
-
-        // Convert to DTO
-        List<CommentVo> vos = commentPage.getRecords().stream()
-                .map(comment -> {
-                    CommentVo vo = new CommentVo();
-                    BeanUtils.copyProperties(comment, vo);
-                    vo.setArticleTitle(articleTitleMap.get(comment.getArticleId()));
-
-                    // Set user information
-                    CommentUser user = userMap.get(comment.getUserId());
-                    if (user != null) {
-                        vo.setUsername(user.getUsername());
-                        vo.setAvatar(user.getAvatar());
-                        vo.setEmail(user.getEmail());
-                        vo.setSite(user.getSite());
-                    }
-
-                    return vo;
-                })
-                .collect(Collectors.toList());
-
-        // Build return page object
-        Page<CommentVo> resultPage = new Page<>(
-                commentPage.getCurrent(),
-                commentPage.getSize(),
-                commentPage.getTotal()
+        IPage<CommentVo> page = commentMapper.selectCommentPage(
+                new Page<>(pageNum, pageSize),
+                params
         );
-        resultPage.setRecords(vos);
 
-        return R.success(resultPage);
+        return R.success(page);
     }
 
     @Override
