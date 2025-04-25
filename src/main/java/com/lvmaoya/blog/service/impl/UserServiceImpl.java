@@ -23,4 +23,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         List<User> users = userMapper.selectList(wrapper);
         return BeanCopyUtil.copyBeanList(users,UserVo.class);
     }
+
+    @Override
+    public UserVo getUser(int i) {
+        User user = userMapper.selectById(i);
+        UserVo userVo = BeanCopyUtil.copyBean(user, UserVo.class);
+        return userVo;
+    }
 }

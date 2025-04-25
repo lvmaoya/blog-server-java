@@ -84,6 +84,7 @@ public class SecurityConfig {
                             // 公开访问的端点
                             .requestMatchers(
                                     "/login",
+                                    "/h5/**",
                                     "/captcha",
                                     "/swagger-ui/**",
                                     "/v3/api-docs/**",
