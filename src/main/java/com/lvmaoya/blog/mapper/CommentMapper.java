@@ -13,12 +13,12 @@ public interface CommentMapper extends BaseMapper<Comment> {
             "SELECT c.*, b.title AS article_title, u.username, u.avatar, u.email, u.site " +
             "FROM commentary c " +
             "LEFT JOIN blog b ON c.article_id = b.id AND b.deleted = 0 " +
-            "LEFT JOIN comment_user u ON c.user_id = u.id " +
+            "LEFT JOIN commentary_user u ON c.user_id = u.id " +
             "<where>" +
             "   <if test='params.articleId != null'> AND c.article_id = #{params.articleId} </if>" +
             "   <if test='params.status != null'> AND c.status = #{params.status} </if>" +
             "</where>" +
-            "ORDER BY c.create_time DESC" +
+            "ORDER BY c.created_time DESC" +
             "</script>")
     @Results({
             @Result(property = "id", column = "id"),
