@@ -34,8 +34,8 @@ public class H5BlogController {
         return R.success(categoryService.list());
     }
 
-    @PostMapping("/blog/list")
-    public R list(@RequestBody(required = false) BlogListSearchParams blogListSearchParams) {
+    @GetMapping("/blog/list")
+    public R list(@ModelAttribute BlogListSearchParams blogListSearchParams) {
         return blogService.blogList(blogListSearchParams);
     }
 

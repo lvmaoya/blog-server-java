@@ -19,8 +19,8 @@ public class BlogController {
     @Resource
     private BlogService blogService;
 
-    @PostMapping("/list")
-    public R list(@RequestBody(required = false) BlogListSearchParams blogListSearchParams) {
+    @GetMapping("/list")
+    public R list(@ModelAttribute BlogListSearchParams blogListSearchParams) {
         return blogService.blogList(blogListSearchParams);
     }
 

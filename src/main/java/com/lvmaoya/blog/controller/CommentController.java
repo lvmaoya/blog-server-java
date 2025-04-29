@@ -21,8 +21,8 @@ public class CommentController {
     public R addOrUpdateComment(@RequestBody CommentPostDto commentPostDto, HttpServletRequest request) {
         return commentService.addOrUpdateComment(commentPostDto, request);
     }
-    @PostMapping("/list")
-    public R getCommentList(@RequestBody CommentSearchParams commentSearchParams) {
+    @GetMapping("/list")
+    public R getCommentList(@ModelAttribute CommentSearchParams commentSearchParams) {
         return commentService.selectList(commentSearchParams);
     }
     @DeleteMapping("/{id}")
