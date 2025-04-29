@@ -3,6 +3,7 @@ package com.lvmaoya.blog.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.lvmaoya.blog.domain.dto.CategoryGetDto;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Category;
 import com.lvmaoya.blog.domain.vo.R;
@@ -13,6 +14,7 @@ import com.lvmaoya.blog.service.CategoryService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -93,5 +95,14 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         queryWrapper.eq("category_name", name)
                 .ne("id", id);
         return categoryMapper.selectCount(queryWrapper) > 0;
+    }
+
+    @Override
+    public R getCategoryList(CategoryGetDto categoryGetDto) {
+        QueryWrapper<Category> categoryQueryWrapper = new QueryWrapper<>();
+        categoryQueryWrapper.eq(Objects.nonNull(categoryGetDto.getFatherCategoryId()),"father_category_id",categoryGetDto.getFatherCategoryId());
+        categoryQueryWrapper.orderByDesc("created_time");
+        List<Category> categoryList = categoryMapper.selectList(categoryQueryWrapper);
+        return R.success(categoryList);
     }
 }

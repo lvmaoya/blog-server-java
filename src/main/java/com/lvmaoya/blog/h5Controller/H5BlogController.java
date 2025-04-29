@@ -1,6 +1,7 @@
 package com.lvmaoya.blog.h5Controller;
 
 import com.lvmaoya.blog.domain.dto.BlogPostDto;
+import com.lvmaoya.blog.domain.dto.CategoryGetDto;
 import com.lvmaoya.blog.domain.searchParams.BlogListSearchParams;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.domain.vo.UserVo;
@@ -30,8 +31,8 @@ public class H5BlogController {
     }
 
     @GetMapping("/category/list")
-    public R getCategoryList() {
-        return R.success(categoryService.list());
+    public R getCategoryList(@ModelAttribute CategoryGetDto categoryGetDto) {
+        return R.success(categoryService.getCategoryList(categoryGetDto));
     }
 
     @GetMapping("/blog/list")
