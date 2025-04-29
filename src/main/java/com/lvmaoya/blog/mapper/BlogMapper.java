@@ -76,6 +76,15 @@ public interface BlogMapper extends BaseMapper<Blog> {
             "LEFT JOIN category c ON b.category_id = c.id ${ew.customSqlSegment}")
     Page<BlogVo> selectBlogWithCategoryPage(Page<Blog> page, @Param(Constants.WRAPPER) Wrapper<Blog> wrapper);
 
+    @Select("SELECT b.*, c.content FROM blog b " +
+            "LEFT JOIN content c ON b.id = c.id " +
+            "WHERE b.id = #{id} AND b.deleted = 0")
+    @Results({
+            @Result(property = "category", column = "category_id",
+                    one = @One(select = "com.lvmaoya.blog.mapper.CategoryMapper.selectById"))
+    })
+    BlogVo selectBlogWithContentById(Integer id);
+
     @Data
     class TimeRangeStatsDTO {
         private String timeRange;

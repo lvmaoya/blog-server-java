@@ -40,7 +40,7 @@ public class H5BlogController {
     }
 
     @GetMapping("/blog/{id}")
-    public R getArticle(@PathVariable String id) {
+    public R getArticle(@PathVariable Integer id) {
         return blogService.getBlogById(id);
     }
 

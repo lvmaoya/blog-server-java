@@ -25,7 +25,7 @@ public class BlogController {
     }
 
     @GetMapping("/{id}")
-    public R getArticle(@PathVariable String id) {
+    public R getArticle(@PathVariable Integer id) {
         return blogService.getBlogById(id);
     }
 

@@ -10,7 +10,7 @@ import com.lvmaoya.blog.domain.vo.R;
 
 public interface BlogService extends IService<Blog> {
     R blogList(BlogListSearchParams blogListSearchParams);
-    R getBlogById(String id);
+    R getBlogById(Integer id);
     R removeById(String id);
     R saveOrUpdate(BlogPostDto blogVo);
 

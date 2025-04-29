@@ -103,15 +103,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         pageVo.setRecords(blogVos);
         return pageVo;
     }
-    public R getBlogById(String id) {
-        Blog blog = blogMapper.selectById(id);
-        if(blog == null){
-            return null;
-        }
-        BlogContent blogContent = blogContentMapper.selectById(id);
-        BlogVo blogVo = BeanCopyUtil.copyBean(blog, BlogVo.class);
-        if(blogContent != null){
-            blogVo.setContent(blogContent.getContent());
+    public R getBlogById(Integer id) {
+        BlogVo blogVo = blogMapper.selectBlogWithContentById(id);
+        if (blogVo == null) {
+            return R.error(400,"博客不存在");
         }
         return R.success(blogVo);
     }
