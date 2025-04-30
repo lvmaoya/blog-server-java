@@ -71,10 +71,56 @@ public interface BlogMapper extends BaseMapper<Blog> {
             @Result(property = "categoryId", column = "category_id"),
             @Result(property = "fatherCategoryId", column = "father_category_id")
     })
-    @Select("SELECT b.*, c.category_name " +
-            "FROM blog b " +
-            "LEFT JOIN category c ON b.category_id = c.id ${ew.customSqlSegment}")
-    Page<BlogVo> selectBlogWithCategoryPage(Page<Blog> page, @Param(Constants.WRAPPER) Wrapper<Blog> wrapper);
+    @Select("<script>\n" +
+            "SELECT b.*, c.category_name \n" +
+            "FROM blog b \n" +
+            "LEFT JOIN category c ON b.category_id = c.id \n" +
+            "<where>\n" +
+            "   <if test=\"status != null and status != ''\">\n" +
+            "       AND b.status = #{status}\n" +
+            "   </if>\n" +
+            "   <if test=\"categoryId != null\">\n" +
+            "       AND b.category_id = #{categoryId}\n" +
+            "   </if>\n" +
+            "   <if test=\"fatherCategoryId != null\">\n" +
+            "       AND c.father_category_id = #{fatherCategoryId}\n" +
+            "   </if>\n" +
+            "   <if test=\"title != null and title != ''\">\n" +
+            "       AND b.title LIKE CONCAT('%', #{title}, '%')\n" +
+            "   </if>\n" +
+            "   <if test=\"keywords != null and keywords != ''\">\n" +
+            "       AND b.description LIKE CONCAT('%', #{keywords}, '%')\n" +
+            "   </if>\n" +
+            "   <if test=\"publishedStart != null\">\n" +
+            "       AND b.published_time &gt;= #{publishedStart}\n" +  // 注意这里的&gt;转义
+            "   </if>\n" +
+            "   <if test=\"publishedEnd != null\">\n" +
+            "       AND b.published_time &lt;= #{publishedEnd}\n" +   // 注意这里的&lt;转义
+            "   </if>\n" +
+            "</where>\n" +
+            "<if test=\"sortBy != null and sortBy != ''\">\n" +
+            "   ORDER BY b.${sortBy} \n" +
+            "   <choose>\n" +
+            "       <when test=\"sortOrder != null and sortOrder != ''\">\n" +
+            "           ${sortOrder}\n" +
+            "       </when>\n" +
+            "       <otherwise>DESC</otherwise>\n" +
+            "   </choose>\n" +
+            "</if>\n" +
+            "<if test=\"sortBy == null or sortBy == ''\">\n" +
+            "   ORDER BY b.published_time DESC\n" +
+            "</if>\n" +
+            "</script>")
+    Page<BlogVo> selectBlogWithCategoryPage(Page<Blog> page,
+                                            @Param("status") String status,
+                                            @Param("categoryId") Integer categoryId,
+                                            @Param("fatherCategoryId") Integer fatherCategoryId,
+                                            @Param("title") String title,
+                                            @Param("keywords") String keywords,
+                                            @Param("publishedStart") Date publishedStart,
+                                            @Param("publishedEnd") Date publishedEnd,
+                                            @Param("sortBy") String sortBy,
+                                            @Param("sortOrder") String sortOrder);
 
     @Select("SELECT b.*, c.content FROM blog b " +
             "LEFT JOIN content c ON b.id = c.id " +

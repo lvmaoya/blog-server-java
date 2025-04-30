@@ -1,6 +1,7 @@
 package com.lvmaoya.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -46,26 +47,22 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Override
     public R blogList(BlogListSearchParams params) {
 
-        // 1. 分页参数处理
-        int page = Optional.ofNullable(params.getPage()).orElse(1);
-        int size = Optional.ofNullable(params.getSize()).orElse(10);
+        // 分页参数处理
+        int pageNum = Optional.ofNullable(params.getPage()).orElse(1);
+        int pageSize = Optional.ofNullable(params.getSize()).orElse(10);
 
-        // 2. 构建查询条件
-        LambdaQueryWrapper<Blog> queryWrapper = new LambdaQueryWrapper<>();
-
-        // 条件筛选
-        queryWrapper.eq(StringUtils.isNotBlank(params.getStatus()), Blog::getStatus, params.getStatus())
-                .eq(StringUtils.isNotBlank(params.getCategory()), Blog::getFatherCategoryId, params.getCategory())
-                .like(StringUtils.isNotBlank(params.getTitle()), Blog::getTitle, params.getTitle())
-                .like(StringUtils.isNotBlank(params.getKeywords()), Blog::getDescription, params.getKeywords())
-                .ge(params.getPublishedStart() != null, Blog::getPublishedTime, params.getPublishedStart())
-                .le(params.getPublishedEnd() != null, Blog::getPublishedTime, params.getPublishedEnd());
-
-        // 排序处理
-        applySorting(queryWrapper, params.getSortBy(), params.getSortOrder());
-
-        // 3. 执行分页查询（联表查询）
-        Page<BlogVo> blogPage = blogMapper.selectBlogWithCategoryPage(new Page<>(page, size), queryWrapper);
+        Page<BlogVo> blogPage = blogMapper.selectBlogWithCategoryPage(
+                new Page<>(pageNum, pageSize),
+                params.getStatus(),
+                params.getCategoryId(),
+                params.getFatherCategoryId(),
+                params.getTitle(),
+                params.getKeywords(),
+                params.getPublishedStart(),
+                params.getPublishedEnd(),
+                params.getSortBy(),
+                params.getSortOrder()
+        );
 
         return R.success(blogPage);
     }

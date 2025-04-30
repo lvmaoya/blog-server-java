@@ -13,7 +13,8 @@ public class BlogListSearchParams {
     private Integer size;
     private String title;
     private String keywords;
-    private String category;
+    private Integer categoryId;
+    private Integer fatherCategoryId;
     private String sortBy;
     private String sortOrder;
     private String status;

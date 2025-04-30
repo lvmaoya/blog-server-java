@@ -23,7 +23,7 @@ public interface CommentMapper extends BaseMapper<Comment> {
     @Results({
             @Result(property = "id", column = "id"),
             @Result(property = "content", column = "content"),
-            @Result(property = "createTime", column = "create_time"),
+            @Result(property = "createTime", column = "created_time"),
             // 其他字段映射...
             @Result(property = "articleTitle", column = "article_title"),
             @Result(property = "username", column = "username"),
