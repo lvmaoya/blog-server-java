@@ -39,7 +39,7 @@ public class H5BlogController {
 
     @GetMapping("/category/list")
     public R getCategoryList(@ModelAttribute CategoryGetDto categoryGetDto) {
-        return R.success(categoryService.getCategoryList(categoryGetDto));
+        return categoryService.getCategoryList(categoryGetDto);
     }
 
     @GetMapping("/blog/list")
