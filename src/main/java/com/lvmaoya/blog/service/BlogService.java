@@ -17,4 +17,6 @@ public interface BlogService extends IService<Blog> {
     R setTop(String id);
 
     R setDisable(String id);
+
+    R updateViewData(Integer id);
 }

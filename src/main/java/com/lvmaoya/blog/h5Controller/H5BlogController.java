@@ -51,7 +51,10 @@ public class H5BlogController {
     public R getArticle(@PathVariable Integer id) {
         return blogService.getBlogById(id);
     }
-
+    @GetMapping("/blog/{id}/view")
+    public R viewArticle(@PathVariable Integer id) {
+        return blogService.updateViewData(id);
+    }
     @GetMapping("/comment/list")
     public R getCommentList(@ModelAttribute CommentSearchParams commentSearchParams) {
         return commentService.selectList(commentSearchParams);

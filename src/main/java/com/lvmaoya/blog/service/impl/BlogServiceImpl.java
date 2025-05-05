@@ -174,4 +174,15 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // 如果需要更复杂的置顶逻辑(如优先级)，可以在这里扩展
         return R.success();
     }
+
+    @Override
+    public R updateViewData(Integer id) {
+        Blog blog = blogMapper.selectById(id);
+        if (blog == null) {
+            return R.error(400, "没有此文章");
+        }
+        blog.setPageView(blog.getPageView() + 1);
+        blogMapper.updateById(blog);
+        return R.success();
+    }
 }
