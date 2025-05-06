@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.lvmaoya.blog.domain.dto.CategoryGetDto;
 import com.lvmaoya.blog.domain.entity.Blog;
 import com.lvmaoya.blog.domain.entity.Category;
+import com.lvmaoya.blog.domain.vo.ArticleCategoryVo;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.handler.exception.BusinessException;
 import com.lvmaoya.blog.mapper.BlogMapper;
@@ -103,6 +104,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
         categoryQueryWrapper.eq(Objects.nonNull(categoryGetDto.getFatherCategoryId()),"father_category_id",categoryGetDto.getFatherCategoryId());
         categoryQueryWrapper.orderByDesc("created_time");
         List<Category> categoryList = categoryMapper.selectList(categoryQueryWrapper);
+        return R.success(categoryList);
+    }
+
+    @Override
+    public R getCategoryListWithCount(CategoryGetDto categoryGetDto) {
+        List<ArticleCategoryVo> categoryList = categoryMapper.selectCategoriesWithArticleCount(
+                categoryGetDto.getFatherCategoryId());
         return R.success(categoryList);
     }
 }

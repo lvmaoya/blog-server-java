@@ -14,4 +14,5 @@ public interface CategoryService extends IService<Category> {
     boolean existsByNameAndIdNot(String name, Integer id);
 
     R getCategoryList(CategoryGetDto categoryGetDto);
+    R getCategoryListWithCount(CategoryGetDto categoryGetDto);
 }
