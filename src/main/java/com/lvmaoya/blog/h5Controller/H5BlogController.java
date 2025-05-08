@@ -44,6 +44,7 @@ public class H5BlogController {
 
     @GetMapping("/blog/list")
     public R list(@ModelAttribute BlogListSearchParams blogListSearchParams) {
+        blogListSearchParams.setStatus("1");
         return blogService.blogList(blogListSearchParams);
     }
 
