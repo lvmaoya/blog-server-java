@@ -39,28 +39,36 @@ public class QiniuCloudUtil {
 
     // 上传文件
     public String uploadFile(MultipartFile file) throws IOException {
-        // 构造一个带指定Zone对象的配置类
+        // 构造配置类和上传管理器
         Configuration cfg = new Configuration(Zone.autoZone());
         UploadManager uploadManager = new UploadManager(cfg);
         Auth auth = Auth.create(accessKey, secretKey);
         String upToken = auth.uploadToken(bucket);
+
+        // 构造文件存储路径（如：folder/original_filename.ext）
         String fileName = folder + "/" + file.getOriginalFilename();
+        String fileUrl = domain + "/" + fileName; // 直接拼接访问路径
 
         try {
+            // 尝试上传文件
             Response response = uploadManager.put(file.getBytes(), fileName, upToken);
-            // 解析上传成功的结果
             DefaultPutRet putRet = response.jsonToObject(DefaultPutRet.class);
             return domain + "/" + putRet.key;
         } catch (QiniuException ex) {
-            Response r = ex.response;
-            System.err.println(r.toString());
-            try {
-                System.err.println(r.bodyString());
-            } catch (QiniuException ex2) {
-                //ignore
+            if (ex.code() == 614) { // 614 表示文件已存在
+                System.out.println("文件已存在，直接返回路径：" + fileUrl);
+                return fileUrl;
+            } else {
+                // 其他异常处理
+                System.err.println("上传失败：" + ex.response.toString());
+                try {
+                    System.err.println(ex.response.bodyString());
+                } catch (QiniuException ex2) {
+                    // ignore
+                }
+                return null;
             }
         }
-        return null;
     }
     /**
      * 实际执行七牛云上传的方法

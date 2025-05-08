@@ -48,7 +48,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
             claims = JwtUtil.getAllClaimsFromToken(authorization);
         }catch (Exception e){
             logger.error("Failed to parse token: ", e);
-            WebUtil.renderForbidden(response);
+            WebUtil.renderUnauthorized(response);
             // token 超时、非法
             return;
         }
@@ -62,7 +62,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
         // 如何没有这个用户，说明登录过期，提示重新登录
         if(Objects.isNull(customUserDetails)){
-           WebUtil.renderForbidden(response);
+           WebUtil.renderUnauthorized(response);
             // token 超时、非法
             return;
         }
