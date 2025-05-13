@@ -51,4 +51,4 @@ qiniu:
   secret-key: dAMRUy71Y0_5nYBaC8pYzIu4UYSKR4SHBUYLeeQq
   bucket: lvmaoya
   domain: https://qn.lvmaoya.cn
-  folder: javaTest
+  folder: blog-new
