@@ -6,9 +6,9 @@ logging:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://101.43.54.84:3306/personal_web_test
-    username: lvmaoya
-    password: root
+    url: jdbc:mysql://101.43.54.84:3306/personal_web_v2
+    username: personal_web_v2
+    password: wfA4kaAzPX8bn8Gy
     hikari:
       max-lifetime: 120000
   servlet:

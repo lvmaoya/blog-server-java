@@ -66,40 +66,6 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
 
         return R.success(blogPage);
     }
-    private void applySorting(LambdaQueryWrapper<Blog> wrapper, String sortBy, String sortOrder) {
-        if (StringUtils.isNotBlank(sortBy)) {
-            boolean isAsc = StringUtils.isNotBlank(sortOrder) && "asc".equalsIgnoreCase(sortOrder);
-            switch (sortBy.toLowerCase()) {
-                case "publishedtime":
-                    wrapper.orderBy(true, isAsc, Blog::getPublishedTime);
-                    break;
-                case "top":
-                    wrapper.orderBy(true, isAsc, Blog::getTop);
-                    break;
-                default:
-                    wrapper.orderByDesc(Blog::getPublishedTime);
-            }
-        } else {
-            wrapper.orderByDesc(Blog::getPublishedTime);
-        }
-    }
-
-    private Page<BlogVo> convertToVoPage(Page<Blog> blogPage) {
-        Page<BlogVo> pageVo = new Page<>();
-        BeanUtils.copyProperties(blogPage, pageVo, "records");
-
-        List<BlogVo> blogVos = blogPage.getRecords().stream()
-                .map(blog -> {
-                    BlogVo vo = BeanCopyUtil.copyBean(blog, BlogVo.class);
-                    // 已经通过联表查询获取了category_name，可以直接设置
-                    vo.setCategory(new Category(blog.getCategoryId(), blog.getCategoryName()));
-                    return vo;
-                })
-                .collect(Collectors.toList());
-
-        pageVo.setRecords(blogVos);
-        return pageVo;
-    }
     public R getBlogById(Integer id) {
         BlogVo blogVo = blogMapper.selectBlogWithContentById(id);
         if (blogVo == null) {
@@ -137,7 +103,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         }
         // 异步生成摘要
         // Spring的@Async是基于代理实现的，同一个类内部的方法调用不会经过代理，导致异步失效。
-        asyncBlogService.updateBlog(blog.getId());
+//        asyncBlogService.updateBlog(blog.getId());
         return R.success(res > 0);
     }
     @Transactional

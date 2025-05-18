@@ -75,7 +75,8 @@ public interface BlogMapper extends BaseMapper<Blog> {
             "SELECT b.*, c.category_name \n" +
             "FROM blog b \n" +
             "LEFT JOIN category c ON b.category_id = c.id \n" +
-            "<where>\n" +
+            "<where>\n"  +
+            "   b.deleted = FALSE\n" +  // 新增删除状态过滤
             "   <if test=\"status != null and status != ''\">\n" +
             "       AND b.status = #{status}\n" +
             "   </if>\n" +
