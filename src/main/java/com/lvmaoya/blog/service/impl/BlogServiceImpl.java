@@ -71,6 +71,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         if (blogVo == null) {
             return R.error(400,"博客不存在");
         }
+        if (blogVo.getCategory() != null) {
+            blogVo.setCategoryId(blogVo.getCategory().getId());//解决 @Results 映射配置中，categoryId 和 category.id 都映射到了同一个数据库列 category_id，这会导致映射冲突：
+        }
         return R.success(blogVo);
     }
 
@@ -150,5 +153,13 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         blog.setPageView(blog.getPageView() + 1);
         blogMapper.updateById(blog);
         return R.success();
+    }
+
+    @Override
+    public Blog findByTitle(String title) {
+        QueryWrapper<Blog> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("title", title);
+        Blog blog = blogMapper.selectOne(queryWrapper);
+        return blog;
     }
 }
