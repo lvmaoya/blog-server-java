@@ -21,13 +21,13 @@ public class Blog {
     private Integer categoryId;
     private Integer fatherCategoryId;
     private String coverImage;
-    private int pageView;
-    private int preferNum;
+    private Integer pageView;
+    private Integer preferNum;
     private Long charCount;
-    private int status;
+    private Integer status;
     private Integer authorId;
-    private int top;
-    private int deleted;
+    private Integer top;
+    private Integer deleted;
     @TableField(fill = FieldFill.INSERT) // 第一次插入时自动填充
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date publishedTime;

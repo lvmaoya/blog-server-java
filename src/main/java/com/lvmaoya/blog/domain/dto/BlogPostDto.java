@@ -16,11 +16,12 @@ public class BlogPostDto {
     private String keywords;
     private Integer categoryId;
     private Long charCount;
+    private Integer pageView;
     private Integer fatherCategoryId;
     private String coverImage;
-    private int status;
+    private Integer status;
     private Integer authorId;
-    private int top;
+    private Integer top;
     private String content;
 
     @Data
