@@ -19,8 +19,8 @@ public class CommentVo {
     private Integer type;
     private String toCommentId;
     private String content;
-    private int status;
-    private int deleted;
+    private Integer status;
+    private Integer deleted;
 
     // User information fields
     private String username;

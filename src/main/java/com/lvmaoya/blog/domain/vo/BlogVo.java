@@ -25,12 +25,12 @@ public class BlogVo {
     private String coverImage;
     private String content;
     private Long charCount;
-    private int pageView;
-    private int preferNum;
-    private int status;
+    private Integer pageView;
+    private Integer preferNum;
+    private Integer status;
     private Integer authorId;
-    private int top;
-    private int deleted;
+    private Integer top;
+//    private int deleted;
     @TableField(fill = FieldFill.INSERT) // 第一次插入时自动填充
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date publishedTime;

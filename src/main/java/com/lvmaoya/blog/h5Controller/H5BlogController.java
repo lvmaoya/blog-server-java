@@ -1,5 +1,6 @@
 package com.lvmaoya.blog.h5Controller;
 
+import com.lvmaoya.blog.controller.OnlineController;
 import com.lvmaoya.blog.domain.dto.BlogPostDto;
 import com.lvmaoya.blog.domain.dto.CategoryGetDto;
 import com.lvmaoya.blog.domain.dto.CommentPostDto;
@@ -7,12 +8,11 @@ import com.lvmaoya.blog.domain.searchParams.BlogListSearchParams;
 import com.lvmaoya.blog.domain.searchParams.CommentSearchParams;
 import com.lvmaoya.blog.domain.vo.R;
 import com.lvmaoya.blog.domain.vo.UserVo;
-import com.lvmaoya.blog.service.BlogService;
-import com.lvmaoya.blog.service.CategoryService;
-import com.lvmaoya.blog.service.CommentService;
-import com.lvmaoya.blog.service.UserService;
+import com.lvmaoya.blog.service.*;
+import com.lvmaoya.blog.utils.IpUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +29,9 @@ public class H5BlogController {
     private UserService userService;
     @Resource
     private CategoryService categoryService;
+
+    @Resource
+    private OnlineService onlineService;
 
     @Resource
     private CommentService commentService;
@@ -63,5 +66,11 @@ public class H5BlogController {
     @PostMapping("/comment")
     public R addOrUpdateComment(@RequestBody CommentPostDto commentPostDto, HttpServletRequest request) {
         return commentService.addOrUpdateComment(commentPostDto, request);
+    }
+
+    @GetMapping("/heart")
+    public String heartbeat(HttpServletRequest request) {
+        onlineService.heartbeat(IpUtils.getClientIp(request));
+        return "success";
     }
 }

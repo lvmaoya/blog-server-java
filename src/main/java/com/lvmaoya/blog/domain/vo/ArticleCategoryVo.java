@@ -17,7 +17,7 @@ public class ArticleCategoryVo {
     private String categoryName;
     private Integer fatherCategoryId;
     private Integer count;
-    private int deleted;
+//    private Integer deleted;
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date createdTime;

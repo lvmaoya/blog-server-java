@@ -14,20 +14,20 @@ public class OnlineController {
     @Autowired
     private OnlineService onlineService;
 
-    @PostMapping("/heartbeat")
-    public R heartbeat(@RequestBody HeartbeatRequest request) {
-        onlineService.heartbeat(request.getClientId());
-        return R.success();
-    }
+//    @PostMapping("/heart")
+//    public R heartbeat(@RequestBody HeartbeatRequest request) {
+//        onlineService.heartbeat(request.getClientId());
+//        return R.success();
+//    }
 
     @GetMapping("/online/count")
     public R getOnlineCount() {
         return R.success(onlineService.getOnlineCount());
     }
 
-    @Data
-    public static class HeartbeatRequest {
-        private String clientId;
-        // getter/setter
-    }
+//    @Data
+//    public static class HeartbeatRequest {
+//        private String clientId;
+//        // getter/setter
+//    }
 }
