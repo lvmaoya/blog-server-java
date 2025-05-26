@@ -49,7 +49,7 @@ public class AsyncBlogServiceImpl implements AsyncBlogService {
     }
     private String generateAbstract(String title, String description, String content) {
         String promptText = String.format(
-                "请为以下文章生成一个简洁的摘要(不超过150字):\n" +
+                "请为以下文章生成一个150字内的简洁的摘要（不要生成字数统计）:\n" +
                         "标题: %s\n" +
                         "描述: %s\n" +
                         "内容: %s\n" +

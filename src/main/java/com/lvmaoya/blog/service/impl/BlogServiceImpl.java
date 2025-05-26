@@ -56,6 +56,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
                 params.getStatus(),
                 params.getCategoryId(),
                 params.getFatherCategoryId(),
+                params.getFatherCategoryIds(),
                 params.getTitle(),
                 params.getKeywords(),
                 params.getPublishedStart(),

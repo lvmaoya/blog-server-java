@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Data
 public class BlogListSearchParams {
@@ -15,6 +16,7 @@ public class BlogListSearchParams {
     private String keywords;
     private Integer categoryId;
     private Integer fatherCategoryId;
+    private List<Integer> fatherCategoryIds;
     private String sortBy;
     private String sortOrder;
     private String status;

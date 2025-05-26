@@ -86,6 +86,12 @@ public interface BlogMapper extends BaseMapper<Blog> {
             "   <if test=\"fatherCategoryId != null\">\n" +
             "       AND c.father_category_id = #{fatherCategoryId}\n" +
             "   </if>\n" +
+            "   <if test=\"fatherCategoryIds != null and fatherCategoryIds.size() > 0\">\n" +
+            "       AND c.father_category_id IN \n" +
+            "       <foreach collection=\"fatherCategoryIds\" item=\"id\" open=\"(\" separator=\",\" close=\")\">\n" +
+            "           #{id}\n" +
+            "       </foreach>\n" +
+            "   </if>\n" +
             "   <if test=\"title != null and title != ''\">\n" +
             "       AND b.title LIKE CONCAT('%', #{title}, '%')\n" +
             "   </if>\n" +
@@ -116,6 +122,7 @@ public interface BlogMapper extends BaseMapper<Blog> {
                                             @Param("status") String status,
                                             @Param("categoryId") Integer categoryId,
                                             @Param("fatherCategoryId") Integer fatherCategoryId,
+                                            @Param("fatherCategoryIds") List<Integer> fatherCategoryIds, // 新增参数
                                             @Param("title") String title,
                                             @Param("keywords") String keywords,
                                             @Param("publishedStart") Date publishedStart,
