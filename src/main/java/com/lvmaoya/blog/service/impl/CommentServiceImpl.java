@@ -54,14 +54,18 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         if (blog == null) {
             throw new BusinessException(400, "没有这篇文章");
         }
+        if(Objects.isNull(commentPostDto.getUsername())){
+            throw new BusinessException(400, "用户名必填");
+        }
         // 获取用户的ip，到用户库里查询，如果没有该用户且该用户的name没填需要抛出异常
         String clientIp = ipUtils.getClientIp(request);
-        CommentUser commentUser = commentUserMapper.selectById(clientIp);
+        CommentUser commentUser = commentUserMapper.selectById(clientIp + ":" + commentPostDto.getUsername());
         if(Objects.isNull(commentUser) && Objects.isNull(commentPostDto.getUsername())){
             throw new BusinessException(400, "用户名必填");
         }
         CommentUser commentUserInsert = BeanCopyUtil.copyBean(commentPostDto, CommentUser.class);
-        commentUserInsert.setId(clientIp);
+        commentUserInsert.setId(clientIp + ":" + commentPostDto.getUsername());
+
         commentUserMapper.insertOrUpdate(commentUserInsert);
 
         // 构建邮件内容
@@ -116,7 +120,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             toEmail = toCommentUser.getEmail();
         }
         Comment comment = BeanCopyUtil.copyBean(commentPostDto, Comment.class);
-        comment.setUserId(clientIp);
+        comment.setUserId(clientIp  + ":" + commentPostDto.getUsername());
         commentMapper.insertOrUpdate(comment);
 
         emailUtil.sendGeneralEmail(subject, content, toEmail);
