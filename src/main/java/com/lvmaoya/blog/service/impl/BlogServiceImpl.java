@@ -107,7 +107,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         }
         // 异步生成摘要
         // Spring的@Async是基于代理实现的，同一个类内部的方法调用不会经过代理，导致异步失效。
-        asyncBlogService.updateBlog(blog.getId());
+        if (!blogVo.getKeepDesc()) {
+            asyncBlogService.updateBlog(blog.getId());
+        }
         return R.success(res > 0);
     }
     @Transactional
