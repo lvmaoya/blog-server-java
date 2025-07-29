@@ -23,6 +23,7 @@ public class BlogPostDto {
     private Integer authorId;
     private Integer top;
     private String content;
+    private Boolean keepDesc;
 
     @Data
     @TableName("commentary")
