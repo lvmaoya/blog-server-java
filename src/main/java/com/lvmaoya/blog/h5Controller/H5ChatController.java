@@ -3,7 +3,9 @@ package com.lvmaoya.blog.h5Controller;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.lvmaoya.blog.domain.dto.ChatBotRequest;
 import com.lvmaoya.blog.domain.vo.ChatBotResponse;
+import com.lvmaoya.blog.domain.dto.ChatMessageRecord;
 import com.lvmaoya.blog.domain.vo.R;
+import com.lvmaoya.blog.utils.RedisCacheUtil;
 import jakarta.annotation.Resource;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -35,9 +37,12 @@ public class H5ChatController {
 
     @Resource
     private OpenAiChatModel chatModel;
+    @Resource
+    private RedisCacheUtil redisCacheUtil;
 
-    // 会话历史存储：chatId -> messages
-    private final ConcurrentMap<String, List<Message>> conversations = new ConcurrentHashMap<>();
+    // Redis key 前缀与过期时间（秒）
+    private static final String CHAT_HISTORY_PREFIX = "chat:history:";
+    private static final long CHAT_TTL_SECONDS = 3 * 24 * 3600; // 3 天
 
     @PostMapping("/chat")
     public R<ChatBotResponse> chat(@RequestBody ChatBotRequest request) {
@@ -50,23 +55,41 @@ public class H5ChatController {
                 ? UUID.randomUUID().toString()
                 : request.getChatId();
 
-        // 获取或创建历史，并添加系统提示（仅首次）
-        List<Message> history = conversations.computeIfAbsent(chatId, id -> {
-            List<Message> list = new ArrayList<>();
-            list.add(new SystemMessage("你是一位乐于助人的助手"));
-            return list;
-        });
+        // 读取或初始化历史（持久化在 Redis）
+        String key = CHAT_HISTORY_PREFIX + chatId;
+        Object cached = redisCacheUtil.get(key);
+        List<ChatMessageRecord> records;
+        if (cached instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof ChatMessageRecord) {
+            //noinspection unchecked
+            records = (List<ChatMessageRecord>) cached;
+        } else {
+            records = new ArrayList<>();
+            records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
+        }
+
+        // 将记录转为 Spring AI 的 Message 序列
+        List<Message> history = new ArrayList<>();
+        for (ChatMessageRecord r : records) {
+            switch (r.getRole()) {
+                case "system" -> history.add(new SystemMessage(r.getContent()));
+                case "user" -> history.add(new UserMessage(r.getContent()));
+                case "assistant" -> history.add(new AssistantMessage(r.getContent()));
+            }
+        }
 
         // 追加用户消息
         history.add(new UserMessage(request.getMessage()));
+        records.add(new ChatMessageRecord("user", request.getMessage()));
 
         try {
             // 传入完整历史，调用模型
             ChatResponse chatResponse = chatModel.call(new Prompt(history));
             String answer = chatResponse.getResult().getOutput().getContent();
 
-            // 记录助手回复到历史，便于下一轮复用上下文
+            // 记录助手回复到历史并持久化
             history.add(new AssistantMessage(answer));
+            records.add(new ChatMessageRecord("assistant", answer));
+            redisCacheUtil.set(key, records, CHAT_TTL_SECONDS);
 
             return R.success(new ChatBotResponse(chatId, answer));
         } catch (Exception e) {
@@ -88,15 +111,40 @@ public class H5ChatController {
             return bad;
         }
 
-        String id = StringUtils.isBlank(request.getChatId()) ? UUID.randomUUID().toString() : request.getChatId();
-        List<Message> history = conversations.computeIfAbsent(id, k -> {
-            List<Message> list = new ArrayList<>();
-            list.add(new SystemMessage("你是一位乐于助人的助手"));
-            return list;
-        });
+        if (StringUtils.isBlank(request.getChatId())) {
+            SseEmitter bad = new SseEmitter(0L);
+            try { bad.send(SseEmitter.event().name("error").data("chatId不能为空")); } catch (Exception ignored) {}
+            bad.complete();
+            return bad;
+        }
+
+        String id = request.getChatId();
+
+        // 读取或初始化历史（持久化在 Redis）
+        String key = CHAT_HISTORY_PREFIX + id;
+        Object cached = redisCacheUtil.get(key);
+        List<ChatMessageRecord> records;
+        if (cached instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof ChatMessageRecord) {
+            //noinspection unchecked
+            records = (List<ChatMessageRecord>) cached;
+        } else {
+            records = new ArrayList<>();
+            records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
+        }
+
+        // 将记录转为 Spring AI 的 Message 序列
+        List<Message> history = new ArrayList<>();
+        for (ChatMessageRecord r : records) {
+            switch (r.getRole()) {
+                case "system" -> history.add(new SystemMessage(r.getContent()));
+                case "user" -> history.add(new UserMessage(r.getContent()));
+                case "assistant" -> history.add(new AssistantMessage(r.getContent()));
+            }
+        }
 
         // 追加本轮用户消息
         history.add(new UserMessage(request.getMessage()));
+        records.add(new ChatMessageRecord("user", request.getMessage()));
 
         // 设置较长超时，避免连接被过早关闭
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
@@ -121,9 +169,11 @@ public class H5ChatController {
                         emitter.complete();
                     },
                     () -> {
-                        // 流结束后，把完整回答写入历史
+                        // 流结束后，把完整回答写入历史并持久化
                         String fullAnswer = answerBuilder.toString();
                         history.add(new AssistantMessage(fullAnswer));
+                        records.add(new ChatMessageRecord("assistant", fullAnswer));
+                        redisCacheUtil.set(key, records, CHAT_TTL_SECONDS);
                         try {
                             emitter.send(SseEmitter.event().name("end").data(id));
                         } catch (Exception ignored) {}
