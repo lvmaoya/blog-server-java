@@ -5,10 +5,13 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
@@ -93,6 +96,17 @@ public class GlobalExceptionHandler {
         log.error("General Exception occurred: ", e);
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         return e.getMessage();
+    }
+
+    /**
+     * 处理404类异常（接口或静态资源不存在）
+     */
+    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
+    public R<Void> handleNotFound(Exception e, HttpServletRequest request, HttpServletResponse response) {
+        String uri = request.getRequestURI();
+        log.warn("Not Found: {} - {}", uri, e.getMessage());
+        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        return R.error(HttpServletResponse.SC_NOT_FOUND, "接口不存在: " + uri);
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)
