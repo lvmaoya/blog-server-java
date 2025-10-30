@@ -43,6 +43,8 @@ public class H5ChatController {
     // Redis key 前缀与过期时间（秒）
     private static final String CHAT_HISTORY_PREFIX = "chat:history:";
     private static final long CHAT_TTL_SECONDS = 3 * 24 * 3600; // 3 天
+    // 携带到模型的历史条数上限（不含系统消息）
+    private static final int MAX_CARRIED_HISTORY = 10;
 
     @PostMapping("/chat")
     public R<ChatBotResponse> chat(@RequestBody ChatBotRequest request) {
@@ -67,9 +69,10 @@ public class H5ChatController {
             records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
         }
 
-        // 将记录转为 Spring AI 的 Message 序列
+        // 仅携带系统消息 + 最近 MAX_CARRIED_HISTORY 条对话消息
+        List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
         List<Message> history = new ArrayList<>();
-        for (ChatMessageRecord r : records) {
+        for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
                 case "system" -> history.add(new SystemMessage(r.getContent()));
                 case "user" -> history.add(new UserMessage(r.getContent()));
@@ -86,10 +89,11 @@ public class H5ChatController {
             ChatResponse chatResponse = chatModel.call(new Prompt(history));
             String answer = chatResponse.getResult().getOutput().getContent();
 
-            // 记录助手回复到历史并持久化
+            // 记录助手回复到历史并持久化（裁剪至上限）
             history.add(new AssistantMessage(answer));
             records.add(new ChatMessageRecord("assistant", answer));
-            redisCacheUtil.set(key, records, CHAT_TTL_SECONDS);
+            List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
+            redisCacheUtil.set(key, trimmed, CHAT_TTL_SECONDS);
 
             return R.success(new ChatBotResponse(chatId, answer));
         } catch (Exception e) {
@@ -132,9 +136,10 @@ public class H5ChatController {
             records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
         }
 
-        // 将记录转为 Spring AI 的 Message 序列
+        // 仅携带系统消息 + 最近 MAX_CARRIED_HISTORY 条对话消息
+        List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
         List<Message> history = new ArrayList<>();
-        for (ChatMessageRecord r : records) {
+        for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
                 case "system" -> history.add(new SystemMessage(r.getContent()));
                 case "user" -> history.add(new UserMessage(r.getContent()));
@@ -169,11 +174,12 @@ public class H5ChatController {
                         emitter.complete();
                     },
                     () -> {
-                        // 流结束后，把完整回答写入历史并持久化
+                        // 流结束后，把完整回答写入历史并持久化（裁剪至上限）
                         String fullAnswer = answerBuilder.toString();
                         history.add(new AssistantMessage(fullAnswer));
                         records.add(new ChatMessageRecord("assistant", fullAnswer));
-                        redisCacheUtil.set(key, records, CHAT_TTL_SECONDS);
+                        List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
+                        redisCacheUtil.set(key, trimmed, CHAT_TTL_SECONDS);
                         try {
                             emitter.send(SseEmitter.event().name("end").data(id));
                         } catch (Exception ignored) {}
@@ -190,3 +196,26 @@ public class H5ChatController {
         return emitter;
     }
 }
+
+    /**
+     * 裁剪历史：保留所有系统消息，且仅保留最近 max 条非系统消息。
+     */
+    private static List<ChatMessageRecord> limitHistory(List<ChatMessageRecord> records, int max) {
+        if (records == null || records.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<ChatMessageRecord> systemRecords = new ArrayList<>();
+        List<ChatMessageRecord> convoRecords = new ArrayList<>();
+        for (ChatMessageRecord r : records) {
+            if ("system".equals(r.getRole())) {
+                systemRecords.add(r);
+            } else {
+                convoRecords.add(r);
+            }
+        }
+        int start = Math.max(convoRecords.size() - Math.max(max, 0), 0);
+        List<ChatMessageRecord> result = new ArrayList<>(systemRecords.size() + (convoRecords.size() - start));
+        result.addAll(systemRecords);
+        result.addAll(convoRecords.subList(start, convoRecords.size()));
+        return result;
+    }
