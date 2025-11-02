@@ -7,13 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+// @Configuration
 public class RagEmbeddingConfig {
 
-    @Value("${spring.ai.openai.base-url}")
+    @Value("${spring.ai.openai.embedding.base-url}")
     private String baseUrl;
 
-    @Value("${spring.ai.openai.api-key}")
+    @Value("${spring.ai.openai.embedding.api-key}")
     private String apiKey;
 
     @Bean

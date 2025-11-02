@@ -175,6 +175,7 @@ public class RagVectorIndexService {
      * 删除现有集合并重新创建，然后索引所有博客内容
      */
     public void rebuildVectorIndex() {
+
         long startTime = System.currentTimeMillis();
         log.info("Starting vector index rebuild...");
 

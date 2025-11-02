@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      # 存放模型文件（建议使用宿主机持久化）
+      - ./ollama:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+    environment:
+      # 可选：用于控制下载源或代理
+      - OLLAMA_KEEP_ALIVE=24h
+      # 如果你有代理可加：
+      # - HTTP_PROXY=http://your.proxy:port
+      # - HTTPS_PROXY=http://your.proxy:port
