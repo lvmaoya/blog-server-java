@@ -195,7 +195,6 @@ public class H5ChatController {
 
         return emitter;
     }
-}
 
     /**
      * 裁剪历史：保留所有系统消息，且仅保留最近 max 条非系统消息。
@@ -219,3 +218,4 @@ public class H5ChatController {
         result.addAll(convoRecords.subList(start, convoRecords.size()));
         return result;
     }
+}
