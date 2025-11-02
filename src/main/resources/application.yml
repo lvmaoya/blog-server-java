@@ -27,6 +27,12 @@ spring:
       chat:
         options:
           model: deepseek-chat
+      embedding:
+        # 使用 DeepSeek 的 OpenAI 兼容嵌入端点（若服务侧提供）
+        base-url: https://api.deepseek.com
+        api-key: sk-7f53157c361d497e9617d2bbfd836d5c
+        options:
+          model: deepseek-chat
   mail:
     host: smtp.qq.com
     protocol: smtp
@@ -52,3 +58,13 @@ qiniu:
   bucket: lvmaoya
   domain: https://qn.lvmaoya.cn
   folder: blog-new
+
+rag:
+  milvus:
+    host: 101.43.54.84
+    port: 19530
+  collection:
+    name: blog_chunks
+  embedding:
+    dim: 768
+  top-k: 8
