@@ -10,13 +10,22 @@ import com.lvmaoya.blog.service.rag.RagVectorSearchService;
 import com.lvmaoya.blog.service.rag.RagVectorSearchService.SearchHit;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
 import jakarta.annotation.Resource;
+import io.milvus.v2.client.MilvusClientV2;
+import io.milvus.v2.service.collection.request.HasCollectionReq;
+import io.milvus.v2.service.collection.request.LoadCollectionReq;
+import io.milvus.v2.service.vector.request.SearchReq;
+import io.milvus.v2.service.vector.request.data.FloatVec;
+import io.milvus.v2.service.vector.response.SearchResp;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.core.env.Environment;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,6 +55,12 @@ public class H5ChatController {
     private RagVectorSearchService ragVectorSearchService;
     @Resource
     private RagVectorIndexService ragVectorIndexService;
+    @Resource
+    private MilvusClientV2 milvusClient;
+    @Resource(name = "ollamaEmbeddingModel")
+    private EmbeddingModel embeddingModel;
+    @Resource
+    private Environment env;
 
     // Redis key 前缀与过期时间（秒）
     private static final String CHAT_HISTORY_PREFIX = "chat:history:";
@@ -360,6 +375,64 @@ public class H5ChatController {
             return R.success("重建完成");
         } catch (Exception e) {
             return R.error(2000, "重建失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 简易检查 Milvus 集合数据：返回集合是否存在、示例数据（Top5）。
+     * 路径：GET /h5/rag/inspect
+     */
+    @GetMapping("/rag/inspect")
+    public R inspect() {
+        String coll = env.getProperty("rag.collection.name", "blog_chunks");
+        try {
+            Boolean exists = milvusClient.hasCollection(HasCollectionReq.builder()
+                    .collectionName(coll)
+                    .build());
+
+            if (!Boolean.TRUE.equals(exists)) {
+                return R.error(404, "集合不存在: " + coll);
+            }
+
+            // 确保集合已加载
+            try {
+                milvusClient.loadCollection(LoadCollectionReq.builder()
+                        .collectionName(coll)
+                        .build());
+            } catch (Exception ignored) {}
+
+            // 用一个简单文本生成查询向量，取 Top5 作为样本
+            float[] vec = embeddingModel.embed("样本验证");
+            SearchReq req = SearchReq.builder()
+                    .collectionName(coll)
+                    .annsField("embedding")
+                    .data(java.util.Collections.singletonList(new FloatVec(vec)))
+                    .topK(5)
+                    .outputFields(java.util.Arrays.asList("blog_id", "chunk_index", "title", "content_preview"))
+                    .searchParams(java.util.Map.of("metric_type", "COSINE"))
+                    .build();
+
+            SearchResp resp = milvusClient.search(req);
+            java.util.List<java.util.List<SearchResp.SearchResult>> results = resp.getSearchResults();
+            java.util.List<java.util.Map<String, Object>> samples = new java.util.ArrayList<>();
+            if (results != null && !results.isEmpty()) {
+                for (SearchResp.SearchResult r : results.get(0)) {
+                    java.util.Map<String, Object> row = new java.util.HashMap<>();
+                    row.put("score", r.getScore());
+                    java.util.Map<String, Object> entity = r.getEntity();
+                    if (entity != null) row.putAll(entity);
+                    samples.add(row);
+                }
+            }
+
+            java.util.Map<String, Object> data = new java.util.HashMap<>();
+            data.put("collection", coll);
+            data.put("exists", true);
+            data.put("samples", samples);
+            data.put("sampleCount", samples.size());
+            return R.success(data);
+        } catch (Exception e) {
+            return R.error(2000, "检查失败: " + e.getMessage());
         }
     }
 
