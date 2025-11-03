@@ -41,7 +41,7 @@ public class RagVectorSearchService {
 
     @Resource
     private MilvusClientV2 milvusClient;
-    @Resource
+    @Resource(name = "ollamaEmbeddingModel")
     private EmbeddingModel embeddingModel;
     @Resource
     private org.springframework.core.env.Environment env;

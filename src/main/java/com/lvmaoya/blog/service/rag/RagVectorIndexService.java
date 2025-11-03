@@ -43,7 +43,7 @@ public class RagVectorIndexService {
 
     @Resource
     private MilvusClientV2 milvusClient;
-    @Resource
+    @Resource(name = "ollamaEmbeddingModel")
     private EmbeddingModel embeddingModel;
     @Resource
     private BlogMapper blogMapper;

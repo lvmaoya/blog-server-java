@@ -27,10 +27,11 @@ spring:
       chat:
         options:
           model: deepseek-chat
-#      embedding:
-#        base-url: http://localhost:11434/api/embeddings
-#        options:
-#          model: nomic-embed-text
+    ollama:
+      base-url: http://localhost:11434
+      embedding:
+        options:
+          model: nomic-embed-text
   mail:
     host: smtp.qq.com
     protocol: smtp
@@ -64,5 +65,6 @@ rag:
   collection:
     name: blog_chunks
   embedding:
-    dim: 1536
+    # 请确保维度与所选模型一致；nomic-embed-text 为 768
+    dim: 768
   top-k: 8
