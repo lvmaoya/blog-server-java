@@ -22,14 +22,15 @@ spring:
       password: king.sun1
   ai:
     openai:
-      base-url: https://api.deepseek.com
+      api-key: sk-7f53157c361d497e9617d2bbfd836d5c
+      base-url: https://api.deepseek.com/v1
       chat:
         options:
           model: deepseek-chat
-      embedding:
-        base-url: https://api.openai.com/v1
-        options:
-          model: text-embedding-3-small
+#      embedding:
+#        base-url: http://localhost:11434/api/embeddings
+#        options:
+#          model: nomic-embed-text
   mail:
     host: smtp.qq.com
     protocol: smtp

@@ -19,5 +19,5 @@ services:
       # 可选：用于控制下载源或代理
       - OLLAMA_KEEP_ALIVE=24h
       # 如果你有代理可加：
-      # - HTTP_PROXY=http://your.proxy:port
-      # - HTTPS_PROXY=http://your.proxy:port
+      # - HTTP_PROXY=http://127.0.0.1:7897
+      # - HTTPS_PROXY=http://127.0.0.1:7897
