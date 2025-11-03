@@ -21,6 +21,8 @@ import com.google.gson.JsonObject;
 import io.milvus.v2.service.vector.request.DeleteReq;
 import io.milvus.v2.service.vector.request.InsertReq;
 import org.springframework.ai.embedding.EmbeddingModel;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.ResponseEntity;
 import java.lang.reflect.Field;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -246,13 +248,21 @@ public class RagVectorIndexService {
             if (content == null) continue;
 
             List<String> chunks = chunkText(content, 500);
+
+            // 批量生成嵌入，显著减少对 Ollama 的调用次数
+            List<List<Float>> chunkEmbeddings = embedBatch(chunks);
             for (int i = 0; i < chunks.size(); i++) {
                 String chunk = chunks.get(i);
 
-                // 生成嵌入向量
-                float[] arr = embeddingModel.embed(chunk);
-                List<Float> fvec = new ArrayList<>(arr.length);
-                for (float v : arr) fvec.add(v);
+                List<Float> fvec;
+                if (chunkEmbeddings != null && i < chunkEmbeddings.size()) {
+                    fvec = chunkEmbeddings.get(i);
+                } else {
+                    // 回退：若批量失败或数量不匹配，单条生成
+                    float[] arr = embeddingModel.embed(chunk);
+                    fvec = new ArrayList<>(arr.length);
+                    for (float v : arr) fvec.add(v);
+                }
 
                 embeddings.add(fvec);
                 blogIds.add(bid.longValue());
@@ -357,13 +367,19 @@ public class RagVectorIndexService {
         List<String> titles = new ArrayList<>();
         List<String> previews = new ArrayList<>();
 
+        // 批量生成嵌入
+        List<List<Float>> chunkEmbeddings = embedBatch(chunks);
         for (int i = 0; i < chunks.size(); i++) {
             String chunk = chunks.get(i);
 
-            // 生成嵌入向量
-            float[] arr = embeddingModel.embed(chunk);
-            List<Float> fvec = new ArrayList<>(arr.length);
-            for (float v : arr) fvec.add(v);
+            List<Float> fvec;
+            if (chunkEmbeddings != null && i < chunkEmbeddings.size()) {
+                fvec = chunkEmbeddings.get(i);
+            } else {
+                float[] arr = embeddingModel.embed(chunk);
+                fvec = new ArrayList<>(arr.length);
+                for (float v : arr) fvec.add(v);
+            }
 
             embeddings.add(fvec);
 
@@ -431,6 +447,50 @@ public class RagVectorIndexService {
         } catch (Exception e) {
             log.error("Error inserting batch: ", e);
         }
+    }
+
+    /**
+     * 使用 Ollama 原生 /api/embed 批量生成嵌入
+     * 优先返回批量结果，失败时返回 null 以便回退到单条生成
+     */
+    private List<List<Float>> embedBatch(List<String> texts) {
+        if (texts == null || texts.isEmpty()) return Collections.emptyList();
+        try {
+            String baseUrl = Optional.ofNullable(env.getProperty("spring.ai.ollama.base-url")).orElse("http://localhost:11434");
+            String model = Optional.ofNullable(env.getProperty("spring.ai.ollama.embedding.model")).orElse("nomic-embed-text");
+            String url = baseUrl.endsWith("/") ? baseUrl + "api/embed" : baseUrl + "/api/embed";
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("model", model);
+            payload.put("input", texts);
+            payload.put("keep_alive", "5m");
+
+            RestTemplate rt = new RestTemplate();
+            ResponseEntity<OllamaEmbedResponse> resp = rt.postForEntity(url, payload, OllamaEmbedResponse.class);
+            OllamaEmbedResponse body = resp.getBody();
+            if (body == null || body.embeddings == null) {
+                log.warn("Batch embed returned empty body or embeddings");
+                return null;
+            }
+
+            List<List<Float>> out = new ArrayList<>(body.embeddings.size());
+            for (List<Double> vec : body.embeddings) {
+                List<Float> fv = new ArrayList<>(vec.size());
+                for (Double d : vec) fv.add(d == null ? 0f : d.floatValue());
+                out.add(fv);
+            }
+            return out;
+        } catch (Exception e) {
+            log.warn("Batch embed failed, falling back to single calls: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Ollama /api/embed 响应模型（只取 embeddings 字段）
+     */
+    private static class OllamaEmbedResponse {
+        public List<List<Double>> embeddings;
     }
 
     /**
