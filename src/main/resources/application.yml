@@ -70,3 +70,7 @@ rag:
     dim: 1024
   top-k: 16
   hnsw.ef: 200
+
+# 站点基本 URL，用于在聊天回复中拼接文章链接
+site:
+  base-url: https://lvmaoya.cn

@@ -67,6 +67,16 @@ public class H5ChatController {
     private static final long CHAT_TTL_SECONDS = 3 * 24 * 3600; // 3 天
     // 携带到模型的历史条数上限（不含系统消息）
     private static final int MAX_CARRIED_HISTORY = 10;
+    // RAG 命中分数阈值与链接数量上限
+    private static final float MIN_RAG_SCORE = 0.20f;
+    // 仅在高相关命中时追加链接的阈值（更严格）
+    private static final float MIN_LINK_SCORE = 0.50f;
+    private static final int MAX_LINKS = 3;
+
+    private String siteBaseUrl() {
+        String url = env.getProperty("site.base-url");
+        return (url == null || url.isBlank()) ? "https://lvmaoya.cn" : url;
+    }
 
     @PostMapping("/chat")
     public R<ChatBotResponse> chat(@RequestBody ChatBotRequest request) {
@@ -88,7 +98,7 @@ public class H5ChatController {
             records = (List<ChatMessageRecord>) cached;
         } else {
             records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
+            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与该博客文章内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
         }
 
         // 仅携带系统消息 + 最近 MAX_CARRIED_HISTORY 条对话消息
@@ -150,12 +160,25 @@ public class H5ChatController {
 
         // 语义检索构建上下文
         List<SearchHit> hits = ragVectorSearchService.searchBySemantic(request.getMessage(), null, null, null);
-        String context = buildContextFromHits(hits);
+        // 过滤低分命中，若无有效资料则直接拒答（不幽默）
+        List<SearchHit> validHits = new java.util.ArrayList<>();
+        if (hits != null) {
+            for (SearchHit h : hits) {
+                if (h != null && h.score != null && h.score >= MIN_RAG_SCORE) {
+                    validHits.add(h);
+                }
+            }
+        }
+        if (validHits.isEmpty()) {
+            String refusal = "仅支持回答与博客文章相关的问题。当前未检索到相关资料，请提供文章标题、技术栈或关键词。";
+            return R.success(new ChatBotResponse(chatId, refusal));
+        }
+        String context = buildContextFromHits(validHits);
 
         // 携带系统消息 + 最近历史 + 语义上下文
         List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
         List<Message> history = new ArrayList<>();
-        history.add(new SystemMessage("你是一个支持基于知识库检索的助手。以下是相关资料：\n" + context));
+        history.add(new SystemMessage("你是 lvmaoya 的小助理。严格依据下方资料作答，若资料不足请直接说明无法回答，不要编造。回答精炼。以下是相关资料：\n" + context));
         for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
                 case "system" -> history.add(new SystemMessage(r.getContent()));
@@ -169,6 +192,10 @@ public class H5ChatController {
         try {
             ChatResponse chatResponse = chatModel.call(new Prompt(history));
             String answer = chatResponse.getResult().getOutput().getContent();
+            String links = buildLinksFromHits(validHits);
+            if (!links.isBlank()) {
+                answer = answer + "\n\n" + links;
+            }
             history.add(new AssistantMessage(answer));
             records.add(new ChatMessageRecord("assistant", answer));
             List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
@@ -211,7 +238,7 @@ public class H5ChatController {
             records = (List<ChatMessageRecord>) cached;
         } else {
             records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
+            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与该博客文章内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
         }
 
         // 仅携带系统消息 + 最近 MAX_CARRIED_HISTORY 条对话消息
@@ -302,16 +329,33 @@ public class H5ChatController {
             records = (List<ChatMessageRecord>) cached;
         } else {
             records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
+            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与该博客文章内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
         }
 
         // 语义检索构建上下文
         List<SearchHit> hits = ragVectorSearchService.searchBySemantic(request.getMessage(), null, null, null);
-        String context = buildContextFromHits(hits);
+        List<SearchHit> validHits = new java.util.ArrayList<>();
+        if (hits != null) {
+            for (SearchHit h : hits) {
+                if (h != null && h.score != null && h.score >= MIN_RAG_SCORE) {
+                    validHits.add(h);
+                }
+            }
+        }
+        if (validHits.isEmpty()) {
+            SseEmitter bad = new SseEmitter(0L);
+            try {
+                bad.send(SseEmitter.event().name("message").data("仅支持回答与博客文章相关的问题。当前未检索到相关资料，请提供文章标题、技术栈或关键词。"));
+                bad.send(SseEmitter.event().name("end").data(request.getChatId()));
+            } catch (Exception ignored) {}
+            bad.complete();
+            return bad;
+        }
+        String context = buildContextFromHits(validHits);
 
         List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
         List<Message> history = new ArrayList<>();
-        history.add(new SystemMessage("你是一个支持基于知识库检索的助手。以下是相关资料：\n" + context));
+        history.add(new SystemMessage("你是 lvmaoya.cn 个人博客的小助理。严格依据下方资料作答，若资料不足请直接说明无法回答，不要编造。回答精炼。以下是相关资料：\n" + context));
         for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
                 case "system" -> history.add(new SystemMessage(r.getContent()));
@@ -344,6 +388,11 @@ public class H5ChatController {
                     },
                     () -> {
                         String fullAnswer = answerBuilder.toString();
+                        String links = buildLinksFromHits(validHits);
+                        if (!links.isBlank()) {
+                            try { emitter.send(SseEmitter.event().name("message").data("\n\n" + links)); } catch (Exception ignored) {}
+                            fullAnswer = fullAnswer + "\n\n" + links;
+                        }
                         history.add(new AssistantMessage(fullAnswer));
                         records.add(new ChatMessageRecord("assistant", fullAnswer));
                         List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
@@ -449,6 +498,30 @@ public class H5ChatController {
                     .append("\n——\n");
         }
         return sb.toString();
+    }
+
+    private String buildLinksFromHits(List<SearchHit> hits) {
+        if (hits == null || hits.isEmpty()) return "";
+        String base = siteBaseUrl();
+        StringBuilder sb = new StringBuilder("相关文章链接：\n");
+        int count = 0;
+        java.util.Set<Long> seen = new java.util.HashSet<>();
+        for (SearchHit h : hits) {
+            if (h == null || h.blogId == null) continue;
+            if (h.score == null || h.score < MIN_LINK_SCORE) continue; // 低相关不追加链接
+            if (seen.contains(h.blogId)) continue;
+            seen.add(h.blogId);
+            sb.append("- ")
+              .append(h.title == null ? "未命名文章" : h.title)
+              .append(" (")
+              .append(base)
+              .append("/blog/")
+              .append(h.blogId)
+              .append(")\n");
+            count++;
+            if (count >= MAX_LINKS) break;
+        }
+        return count == 0 ? "" : sb.toString();
     }
 
     /**
