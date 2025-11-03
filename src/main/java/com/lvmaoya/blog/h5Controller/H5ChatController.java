@@ -22,7 +22,7 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.embedding.EmbeddingModel;
+import com.lvmaoya.blog.service.rag.ZhipuEmbeddingService;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,8 +57,8 @@ public class H5ChatController {
     private RagVectorIndexService ragVectorIndexService;
     @Resource
     private MilvusClientV2 milvusClient;
-    @Resource(name = "ollamaEmbeddingModel")
-    private EmbeddingModel embeddingModel;
+    @Resource
+    private ZhipuEmbeddingService zhipuEmbeddingService;
     @Resource
     private Environment env;
 
@@ -403,7 +403,7 @@ public class H5ChatController {
             } catch (Exception ignored) {}
 
             // 用一个简单文本生成查询向量，取 Top5 作为样本
-            float[] vec = embeddingModel.embed("样本验证");
+            float[] vec = zhipuEmbeddingService.embed("样本验证");
             SearchReq req = SearchReq.builder()
                     .collectionName(coll)
                     .annsField("embedding")

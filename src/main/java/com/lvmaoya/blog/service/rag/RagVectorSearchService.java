@@ -6,7 +6,7 @@ import io.milvus.v2.service.vector.request.SearchReq;
 import io.milvus.v2.service.vector.request.data.FloatVec;
 import io.milvus.v2.service.vector.response.SearchResp;
 import jakarta.annotation.Resource;
-import org.springframework.ai.embedding.EmbeddingModel;
+import com.lvmaoya.blog.service.rag.ZhipuEmbeddingService;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +41,8 @@ public class RagVectorSearchService {
 
     @Resource
     private MilvusClientV2 milvusClient;
-    @Resource(name = "ollamaEmbeddingModel")
-    private EmbeddingModel embeddingModel;
+    @Resource
+    private ZhipuEmbeddingService zhipuEmbeddingService;
     @Resource
     private org.springframework.core.env.Environment env;
 
@@ -95,7 +95,7 @@ public class RagVectorSearchService {
         // 生成查询向量
         float[] arr;
         try {
-            arr = embeddingModel.embed(query);
+            arr = zhipuEmbeddingService.embed(query);
         } catch (Exception e) {
             log.error("Error generating embedding for query: ", e);
             return Collections.emptyList();

@@ -27,12 +27,6 @@ spring:
       chat:
         options:
           model: deepseek-chat
-    ollama:
-      base-url: http://localhost:11434
-      embedding:
-        model: bge-m3
-        options:
-          model: bge-m3
   mail:
     host: smtp.qq.com
     protocol: smtp
@@ -41,6 +35,12 @@ spring:
     default-encoding: utf-8
     ssl:
       enabled: true
+
+zhipu:
+  api-key: 25947cfd4e734874a93d84bf00fad6a5.UpkjTQY9dJTeuaEe
+  embedding:
+    base-url: https://open.bigmodel.cn/api/paas/v3/embeddings
+    model: embedding-3
 
 mybatis-plus:
   global-config:

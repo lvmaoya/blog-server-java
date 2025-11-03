@@ -105,11 +105,11 @@
             <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
             <version>1.0.0-M5</version>
         </dependency>
-        <!--  spring-ai ollama for native embedding API  -->
+        <!--  Zhipu AI SDK for Embedding-3 -->
         <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-ollama-spring-boot-starter</artifactId>
-            <version>1.0.0-M5</version>
+            <groupId>ai.z.openapi</groupId>
+            <artifactId>zai-sdk</artifactId>
+            <version>0.0.6</version>
         </dependency>
         <!--  mail  -->
         <dependency>
