@@ -177,6 +177,14 @@ public class RagVectorIndexService {
      * 删除现有集合并重新创建，然后索引所有博客内容
      */
     public void rebuildVectorIndex() {
+        rebuildVectorIndex(null);
+    }
+
+    /**
+     * 重建向量索引，支持限制处理的博客数量用于测试
+     * @param limit 可选，限制处理的前 N 篇文章
+     */
+    public void rebuildVectorIndex(Integer limit) {
 
         long startTime = System.currentTimeMillis();
         log.info("Starting vector index rebuild...");
@@ -219,6 +227,10 @@ public class RagVectorIndexService {
 
         // 获取所有博客及其内容
         List<Blog> blogs = blogMapper.selectList(null);
+        if (limit != null && limit > 0 && blogs.size() > limit) {
+            blogs = blogs.subList(0, Math.min(limit, blogs.size()));
+            log.info("Limiting rebuild to first {} blogs for testing", blogs.size());
+        }
         log.info("Found {} blogs to index", blogs.size());
 
         Map<Long, BlogContent> contents = new HashMap<>();

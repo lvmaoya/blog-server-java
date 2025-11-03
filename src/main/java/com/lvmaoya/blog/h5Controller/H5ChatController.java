@@ -369,10 +369,11 @@ public class H5ChatController {
      * 路径：POST /h5/rag/reindex
      */
     @PostMapping("/rag/reindex")
-    public R reindex() {
+    public R reindex(@org.springframework.web.bind.annotation.RequestParam(name = "limit", required = false) Integer limit) {
         try {
-            ragVectorIndexService.rebuildVectorIndex();
-            return R.success("重建完成");
+            ragVectorIndexService.rebuildVectorIndex(limit);
+            String msg = (limit != null && limit > 0) ? ("重建完成（仅处理前" + limit + "篇）") : "重建完成";
+            return R.success(msg);
         } catch (Exception e) {
             return R.error(2000, "重建失败: " + e.getMessage());
         }
