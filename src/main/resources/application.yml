@@ -30,6 +30,7 @@ spring:
     ollama:
       base-url: http://localhost:11434
       embedding:
+        model: bge-m3
         options:
           model: bge-m3
   mail:
@@ -65,6 +66,7 @@ rag:
   collection:
     name: blog_chunks
   embedding:
-    # 请确保维度与所选模型一致；nomic-embed-text 为 768
-    dim: 768
-  top-k: 8
+    # 请确保维度与所选模型一致；bge-m3 通常为 1024
+    dim: 1024
+  top-k: 16
+  hnsw.ef: 200
