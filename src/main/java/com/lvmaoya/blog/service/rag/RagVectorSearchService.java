@@ -57,8 +57,36 @@ public class RagVectorSearchService {
      * 获取搜索结果数量
      */
     private int topK() {
-        String v = env.getProperty("rag.top-k", "8");
+        String v = env.getProperty("rag.top-k", "6");
         return Integer.parseInt(v);
+    }
+
+    /**
+     * 最小相关性分数阈值（可通过配置覆盖）
+     */
+    private float minScore() {
+        String v = env.getProperty("rag.min-score", "0.55");
+        try {
+            return Float.parseFloat(v);
+        } catch (Exception ignored) {
+            return 0.55f;
+        }
+    }
+
+    /**
+     * 简单内容黑名单（过滤无关/不当内容）
+     */
+    private static final java.util.List<String> BLOCKLIST = java.util.Arrays.asList(
+            "直播", "招嫖", "澳门", "开元", "娱乐", "迷奸", "药水", "成人", "色情", "艳女",
+            "蜜臀", "偷情", "赌博", "赌场", "PG娱乐", "英皇娱乐", "下载次数"
+    );
+
+    private boolean containsBlockedKeyword(String s) {
+        if (s == null || s.isEmpty()) return false;
+        for (String k : BLOCKLIST) {
+            if (s.contains(k)) return true;
+        }
+        return false;
     }
 
     /**
@@ -182,8 +210,18 @@ public class RagVectorSearchService {
                 log.debug("Result {}: {}", i+1, hits.get(i));
             }
         }
-        
-        return hits;
+        // 应用相关性阈值与黑名单过滤
+        float threshold = minScore();
+        List<SearchHit> filtered = hits.stream()
+                .filter(h -> h != null && h.score != null && h.score >= threshold)
+                .filter(h -> !containsBlockedKeyword(h.title) && !containsBlockedKeyword(h.contentPreview))
+                .collect(Collectors.toList());
+
+        if (filtered.size() < hits.size()) {
+            log.info("Filtered out {} low/blocked results (threshold: {})", (hits.size() - filtered.size()), threshold);
+        }
+
+        return filtered;
     }
     
     /**
