@@ -121,7 +121,7 @@ public class H5ChatController {
         // 携带系统消息 + 最近历史 + 语义上下文
         List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
         List<Message> history = new ArrayList<>();
-        history.add(new SystemMessage("你是 lvmaoya 的小助理。只回答与本站内容相关的问题；若资料不足请直接说明无法回答，不要编造。回答精炼。以下是相关资料：\n" + context));
+        history.add(new SystemMessage(assistantPersonaPrompt(context)));
         for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
                 case "system" -> history.add(new SystemMessage(r.getContent()));
@@ -136,8 +136,12 @@ public class H5ChatController {
             ChatResponse chatResponse = chatModel.call(new Prompt(history));
             String answer = chatResponse.getResult().getOutput().getContent();
             String links = buildLinksFromHits(validHits);
+            String nav = buildNavHintsFromMessage(request.getMessage());
             if (!links.isBlank()) {
                 answer = answer + "\n\n" + links;
+            }
+            if (!nav.isBlank()) {
+                answer = answer + "\n\n" + nav;
             }
             history.add(new AssistantMessage(answer));
             records.add(new ChatMessageRecord("assistant", answer));
@@ -196,7 +200,7 @@ public class H5ChatController {
 
         List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
         List<Message> history = new ArrayList<>();
-        history.add(new SystemMessage("你是 lvmaoya 的小助理。只回答与本站内容相关的问题；若资料不足请直接说明无法回答，不要编造。回答精炼。以下是相关资料：\n" + context));
+        history.add(new SystemMessage(assistantPersonaPrompt(context)));
         for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
                 case "system" -> history.add(new SystemMessage(r.getContent()));
@@ -230,9 +234,11 @@ public class H5ChatController {
                     () -> {
                         String fullAnswer = answerBuilder.toString();
                         String links = buildLinksFromHits(validHits);
-                        if (!links.isBlank()) {
-                            try { emitter.send(SseEmitter.event().name("message").data("\n\n" + links)); } catch (Exception ignored) {}
-                            fullAnswer = fullAnswer + "\n\n" + links;
+                        String nav = buildNavHintsFromMessage(request.getMessage());
+                        String extra = (links.isBlank() ? "" : ("\n\n" + links)) + (nav.isBlank() ? "" : ("\n\n" + nav));
+                        if (!extra.isBlank()) {
+                            try { emitter.send(SseEmitter.event().name("message").data(extra)); } catch (Exception ignored) {}
+                            fullAnswer = fullAnswer + extra;
                         }
                         history.add(new AssistantMessage(fullAnswer));
                         records.add(new ChatMessageRecord("assistant", fullAnswer));
@@ -404,5 +410,56 @@ public class H5ChatController {
         result.addAll(systemRecords);
         result.addAll(convoRecords.subList(start, convoRecords.size()));
         return result;
+    }
+
+    /**
+     * 构建助手人设系统提示，注入 RAG 上下文
+     */
+    private String assistantPersonaPrompt(String context) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("你是 lvmaoya （https://lvmaoya.cn/）的智能助手。\n")
+          .append("【网站简介】\n")
+          .append("这是一个个人博客与作品展示网站，内容涉及：\n")
+          .append("- Web 开发、AI、数据分析、设计相关的原创内容；\n")
+          .append("- 个人项目、学习总结与技术实践；\n")
+          .append("- 部分文章包含代码示例与项目案例。\n\n")
+          .append("【你的任务】\n")
+          .append("1. 回答访客关于网站内容、文章、项目、技术栈等问题；\n")
+          .append("2. 如果用户询问作者本人，请简要介绍“lumoyoo 是网站作者，一名热爱技术与创作的开发者”；\n")
+          .append("3. 如果问题涉及网站导航（如“作品在哪里？”、“怎么联系你？”），请引导用户前往网站的相关页面；\n")
+          .append("4. 如果问题与你提供的内容无关，请友好地说明“我目前只了解网站内的内容”；\n")
+          .append("5. 保持回答语气：友好、简洁、有帮助；\n")
+          .append("6. 不要编造不存在的页面或内容；\n")
+          .append("7. 如果合适，可以推荐相关文章或作品板块。\n\n")
+          .append("【回答风格】\n")
+          .append("- 使用中文回答；\n")
+          .append("- 语气自然、简洁；\n")
+          .append("- 尽量用第一人称口吻（如“我的博客中有…”）；\n")
+          .append("- 当无法确定时，请回复：“这个问题我暂时没有相关内容，不过你可以浏览博客主页看看是否有相关主题。”\n\n")
+          .append("【可用导航提示】\n")
+          .append("- 博客文章 → https://lvmaoya.cn/blog\n")
+          .append("- 作品展示 → https://lvmaoya.cn/work\n")
+          .append("- 关于我 → https://lvmaoya.cn/about\n")
+          .append("- 联系方式 → https://lvmaoya.cn/contact\n\n")
+          .append("严格依据下方资料作答，若资料不足请直接说明无法回答，不要编造。以下是相关资料：\n")
+          .append(context == null || context.isBlank() ? "(未检索到相关资料)" : context);
+        return sb.toString();
+    }
+
+    /**
+     * 根据用户意图追加站点导航提示（作品/联系/关于/博客）。
+     */
+    private String buildNavHintsFromMessage(String msg) {
+        if (msg == null || msg.isBlank()) return "";
+        String m = msg.toLowerCase();
+        StringBuilder sb = new StringBuilder();
+        boolean any = false;
+
+        if (m.contains("作品") || m.contains("work")) { sb.append("你可以在作品展示查看： https://lvmaoya.cn/work\n"); any = true; }
+        if (m.contains("联系") || m.contains("contact") || m.contains("微信") || m.contains("邮箱")) { sb.append("联系方式在这里： https://lvmaoya.cn/contact\n"); any = true; }
+        if (m.contains("关于") || m.contains("about") || m.contains("作者") || m.contains("你是谁")) { sb.append("关于我页面： https://lvmaoya.cn/about\n"); any = true; }
+        if (m.contains("博客") || m.contains("文章") || m.contains("blog")) { sb.append("博客文章入口： https://lvmaoya.cn/blog\n"); any = true; }
+
+        return any ? ("站点导航：\n" + sb.toString().trim()) : "";
     }
 }
