@@ -78,61 +78,6 @@ public class H5ChatController {
         return (url == null || url.isBlank()) ? "https://lvmaoya.cn" : url;
     }
 
-    @PostMapping("/chat")
-    public R<ChatBotResponse> chat(@RequestBody ChatBotRequest request) {
-        if (request == null || StringUtils.isBlank(request.getMessage())) {
-            return R.error(400, "消息内容不能为空");
-        }
-
-        // 如果没有传入 chatId，则创建新的会话
-        String chatId = StringUtils.isBlank(request.getChatId())
-                ? UUID.randomUUID().toString()
-                : request.getChatId();
-
-        // 读取或初始化历史（持久化在 Redis）
-        String key = CHAT_HISTORY_PREFIX + chatId;
-        Object cached = redisCacheUtil.get(key);
-        List<ChatMessageRecord> records;
-        if (cached instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof ChatMessageRecord) {
-            //noinspection unchecked
-            records = (List<ChatMessageRecord>) cached;
-        } else {
-            records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与该博客文章内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
-        }
-
-        // 仅携带系统消息 + 最近 MAX_CARRIED_HISTORY 条对话消息
-        List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
-        List<Message> history = new ArrayList<>();
-        for (ChatMessageRecord r : carriedRecords) {
-            switch (r.getRole()) {
-                case "system" -> history.add(new SystemMessage(r.getContent()));
-                case "user" -> history.add(new UserMessage(r.getContent()));
-                case "assistant" -> history.add(new AssistantMessage(r.getContent()));
-            }
-        }
-
-        // 追加用户消息
-        history.add(new UserMessage(request.getMessage()));
-        records.add(new ChatMessageRecord("user", request.getMessage()));
-
-        try {
-            // 传入完整历史，调用模型
-            ChatResponse chatResponse = chatModel.call(new Prompt(history));
-            String answer = chatResponse.getResult().getOutput().getContent();
-
-            // 记录助手回复到历史并持久化（裁剪至上限）
-            history.add(new AssistantMessage(answer));
-            records.add(new ChatMessageRecord("assistant", answer));
-            List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
-            redisCacheUtil.set(key, trimmed, CHAT_TTL_SECONDS);
-
-            return R.success(new ChatBotResponse(chatId, answer));
-        } catch (Exception e) {
-            return R.error(2000, "处理请求时发生错误: " + e.getMessage());
-        }
-    }
-
     /**
      * 语义检索增强的非流式对话。
      * 路径：POST /h5/chat/rag，Body: { chatId?, message }
@@ -169,10 +114,6 @@ public class H5ChatController {
                 }
             }
         }
-        if (validHits.isEmpty()) {
-            String refusal = "仅支持回答与博客文章相关的问题。当前未检索到相关资料，请提供文章标题、技术栈或关键词。";
-            return R.success(new ChatBotResponse(chatId, refusal));
-        }
         String context = buildContextFromHits(validHits);
 
         // 携带系统消息 + 最近历史 + 语义上下文
@@ -207,101 +148,6 @@ public class H5ChatController {
     }
 
     /**
-     * 流式输出（SSE）。使用 POST 请求体，便于前端通过 fetch 处理长文本。
-     * 路径：POST /h5/chat/stream，Body: { chatId?, message }
-     */
-    @PostMapping("/chat/stream")
-    public SseEmitter chatStream(@RequestBody ChatBotRequest request) {
-        if (request == null || StringUtils.isBlank(request.getMessage())) {
-            // 直接返回一个已完成的 emitter，避免 500
-            SseEmitter bad = new SseEmitter(0L);
-            try { bad.send(SseEmitter.event().name("error").data("消息内容不能为空")); } catch (Exception ignored) {}
-            bad.complete();
-            return bad;
-        }
-
-        if (StringUtils.isBlank(request.getChatId())) {
-            SseEmitter bad = new SseEmitter(0L);
-            try { bad.send(SseEmitter.event().name("error").data("chatId不能为空")); } catch (Exception ignored) {}
-            bad.complete();
-            return bad;
-        }
-
-        String id = request.getChatId();
-
-        // 读取或初始化历史（持久化在 Redis）
-        String key = CHAT_HISTORY_PREFIX + id;
-        Object cached = redisCacheUtil.get(key);
-        List<ChatMessageRecord> records;
-        if (cached instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof ChatMessageRecord) {
-            //noinspection unchecked
-            records = (List<ChatMessageRecord>) cached;
-        } else {
-            records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与该博客文章内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
-        }
-
-        // 仅携带系统消息 + 最近 MAX_CARRIED_HISTORY 条对话消息
-        List<ChatMessageRecord> carriedRecords = limitHistory(records, MAX_CARRIED_HISTORY);
-        List<Message> history = new ArrayList<>();
-        for (ChatMessageRecord r : carriedRecords) {
-            switch (r.getRole()) {
-                case "system" -> history.add(new SystemMessage(r.getContent()));
-                case "user" -> history.add(new UserMessage(r.getContent()));
-                case "assistant" -> history.add(new AssistantMessage(r.getContent()));
-            }
-        }
-
-        // 追加本轮用户消息
-        history.add(new UserMessage(request.getMessage()));
-        records.add(new ChatMessageRecord("user", request.getMessage()));
-
-        // 设置较长超时，避免连接被过早关闭
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
-
-        StringBuilder answerBuilder = new StringBuilder();
-
-        try {
-            chatModel.stream(new Prompt(history)).subscribe(
-                    chunk -> {
-                        String delta = chunk.getResult().getOutput().getContent();
-                        if (delta != null && !delta.isEmpty()) {
-                            answerBuilder.append(delta);
-                            try {
-                                emitter.send(SseEmitter.event().name("message").data(delta));
-                            } catch (Exception ignored) {}
-                        }
-                    },
-                    error -> {
-                        try {
-                            emitter.send(SseEmitter.event().name("error").data("处理请求时发生错误: " + error.getMessage()));
-                        } catch (Exception ignored) {}
-                        emitter.complete();
-                    },
-                    () -> {
-                        // 流结束后，把完整回答写入历史并持久化（裁剪至上限）
-                        String fullAnswer = answerBuilder.toString();
-                        history.add(new AssistantMessage(fullAnswer));
-                        records.add(new ChatMessageRecord("assistant", fullAnswer));
-                        List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
-                        redisCacheUtil.set(key, trimmed, CHAT_TTL_SECONDS);
-                        try {
-                            emitter.send(SseEmitter.event().name("end").data(id));
-                        } catch (Exception ignored) {}
-                        emitter.complete();
-                    }
-            );
-        } catch (Exception e) {
-            try {
-                emitter.send(SseEmitter.event().name("error").data("处理请求时发生错误: " + e.getMessage()));
-            } catch (Exception ignored) {}
-            emitter.complete();
-        }
-
-        return emitter;
-    }
-
-    /**
      * 语义检索增强的流式对话（SSE）。
      * 路径：POST /h5/chat/rag/stream，Body: { chatId, message }
      */
@@ -329,7 +175,7 @@ public class H5ChatController {
             records = (List<ChatMessageRecord>) cached;
         } else {
             records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与该博客文章内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
+            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与该网站内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
         }
 
         // 语义检索构建上下文
@@ -341,15 +187,6 @@ public class H5ChatController {
                     validHits.add(h);
                 }
             }
-        }
-        if (validHits.isEmpty()) {
-            SseEmitter bad = new SseEmitter(0L);
-            try {
-                bad.send(SseEmitter.event().name("message").data("仅支持回答与博客文章相关的问题。当前未检索到相关资料，请提供文章标题、技术栈或关键词。"));
-                bad.send(SseEmitter.event().name("end").data(request.getChatId()));
-            } catch (Exception ignored) {}
-            bad.complete();
-            return bad;
         }
         String context = buildContextFromHits(validHits);
 
