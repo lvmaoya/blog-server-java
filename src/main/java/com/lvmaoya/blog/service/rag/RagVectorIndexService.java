@@ -463,7 +463,26 @@ public class RagVectorIndexService {
      * 批量生成嵌入，优先使用批量结果；失败时回退到单条生成
      */
     private List<List<Float>> embedBatch(List<String> texts) {
-        return zhipuEmbeddingService.embedBatch(texts);
+        if (texts == null || texts.isEmpty()) return Collections.emptyList();
+        // 智谱 embedding 接口单次最多 64 条，这里进行分批调用以避免 400 错误
+        int limit = env.getProperty("zhipu.embedding.batch.limit", Integer.class, 64);
+        List<List<Float>> all = new ArrayList<>(texts.size());
+        for (int i = 0; i < texts.size(); i += limit) {
+            List<String> sub = texts.subList(i, Math.min(texts.size(), i + limit));
+            List<List<Float>> part = zhipuEmbeddingService.embedBatch(sub);
+            if (part != null && !part.isEmpty()) {
+                all.addAll(part);
+            } else {
+                // 如果批量失败，逐条回退生成，确保尽可能多产出
+                for (String s : sub) {
+                    float[] arr = zhipuEmbeddingService.embed(s);
+                    List<Float> fv = new ArrayList<>(arr.length);
+                    for (float v : arr) fv.add(v);
+                    all.add(fv);
+                }
+            }
+        }
+        return all;
     }
 
     
