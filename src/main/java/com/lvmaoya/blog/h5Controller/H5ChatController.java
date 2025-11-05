@@ -380,7 +380,7 @@ public class H5ChatController {
               .append(h.title == null ? "未命名文章" : h.title)
               .append(" (")
               .append(base)
-              .append("/blog/")
+              .append("/detail/")
               .append(h.blogId)
               .append(")\n");
             count++;
@@ -425,7 +425,7 @@ public class H5ChatController {
           .append("- 部分文章包含代码示例与项目案例。\n\n")
           .append("【你的任务】\n")
           .append("1. 回答访客关于网站内容、文章、项目、技术栈等问题；\n")
-          .append("2. 如果用户询问作者本人，请简要介绍“lumoyoo 是网站作者，一名热爱技术与创作的开发者”；\n")
+          .append("2. 如果用户询问作者本人，请简要介绍“lvmaoya 是网站作者，一名热爱技术与创作的开发者”；\n")
           .append("3. 如果问题涉及网站导航（如“作品在哪里？”、“怎么联系你？”），请引导用户前往网站的相关页面；\n")
           .append("4. 如果问题与你提供的内容无关，请友好地说明“我目前只了解网站内的内容”；\n")
           .append("5. 保持回答语气：友好、简洁、有帮助；\n")
@@ -440,7 +440,7 @@ public class H5ChatController {
           .append("- 博客文章 → https://lvmaoya.cn/blog\n")
           .append("- 作品展示 → https://lvmaoya.cn/work\n")
           .append("- 关于我 → https://lvmaoya.cn/about\n")
-          .append("- 联系方式 → https://lvmaoya.cn/contact\n\n")
+          .append("- 联系方式 → mailto:1504734652@qq.com\n\n")
           .append("严格依据下方资料作答，若资料不足请直接说明无法回答，不要编造。以下是相关资料：\n")
           .append(context == null || context.isBlank() ? "(未检索到相关资料)" : context);
         return sb.toString();
@@ -456,9 +456,9 @@ public class H5ChatController {
         boolean any = false;
 
         if (m.contains("作品") || m.contains("work")) { sb.append("你可以在作品展示查看： https://lvmaoya.cn/work\n"); any = true; }
-        if (m.contains("联系") || m.contains("contact") || m.contains("微信") || m.contains("邮箱")) { sb.append("联系方式在这里： https://lvmaoya.cn/contact\n"); any = true; }
+        if (m.contains("联系") || m.contains("contact") || m.contains("微信") || m.contains("邮箱")) { sb.append("联系方式在这里： mailto:1504734652@qq.com\n"); any = true; }
         if (m.contains("关于") || m.contains("about") || m.contains("作者") || m.contains("你是谁")) { sb.append("关于我页面： https://lvmaoya.cn/about\n"); any = true; }
-        if (m.contains("博客") || m.contains("文章") || m.contains("blog")) { sb.append("博客文章入口： https://lvmaoya.cn/blog\n"); any = true; }
+        if (m.contains("博客") || m.contains("文章") || m.contains("blog")) { sb.append("博客文章入口： https://lvmaoya.cn/\n"); any = true; }
 
         return any ? ("站点导航：\n" + sb.toString().trim()) : "";
     }
