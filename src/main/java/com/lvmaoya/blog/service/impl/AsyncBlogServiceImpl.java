@@ -7,6 +7,7 @@ import com.lvmaoya.blog.mapper.BlogContentMapper;
 import com.lvmaoya.blog.mapper.BlogMapper;
 import com.lvmaoya.blog.service.AsyncBlogService;
 import com.lvmaoya.blog.service.BlogService;
+import com.lvmaoya.blog.service.rag.RagVectorIndexService;
 import com.lvmaoya.blog.utils.BeanCopyUtil;
 import jakarta.annotation.Resource;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -26,6 +27,8 @@ public class AsyncBlogServiceImpl implements AsyncBlogService {
     private BlogContentMapper blogContentMapper;
     @Resource
     private OpenAiChatModel chatModel;
+    @Resource
+    private RagVectorIndexService ragVectorIndexService;
     @Override
     @Async("taskExecutor")
     public void updateBlog(Integer articleId) {
@@ -43,6 +46,16 @@ public class AsyncBlogServiceImpl implements AsyncBlogService {
             // 更新摘要和状态
             blog.setArticleAbstract(abstractText);
             blogMapper.updateById(blog);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    @Async("taskExecutor")
+    public void upsertRagIndex(Long blogId) {
+        try {
+            ragVectorIndexService.upsertBlog(blogId);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

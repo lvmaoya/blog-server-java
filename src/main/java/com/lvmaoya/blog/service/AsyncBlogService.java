@@ -8,4 +8,5 @@ import com.lvmaoya.blog.domain.vo.BlogVo;
 
 public interface AsyncBlogService {
     void updateBlog(Integer articleId);
+    void upsertRagIndex(Long blogId);
 }

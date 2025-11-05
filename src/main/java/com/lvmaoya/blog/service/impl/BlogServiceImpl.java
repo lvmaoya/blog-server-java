@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.lvmaoya.blog.service.rag.RagVectorIndexService;
 
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
@@ -44,6 +45,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     private CategoryService categoryService;
     @Resource
     private AsyncBlogService asyncBlogService;
+    @Resource
+    private RagVectorIndexService ragVectorIndexService;
     @Override
     public R blogList(BlogListSearchParams params) {
 
@@ -109,6 +112,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
         // Spring的@Async是基于代理实现的，同一个类内部的方法调用不会经过代理，导致异步失效。
         if (!blogVo.getKeepDesc()) {
             asyncBlogService.updateBlog(blog.getId());
+            // 新增/更新文章后，异步重建该文章的向量索引（增量）
+            asyncBlogService.upsertRagIndex(blog.getId().longValue());
         }
         return R.success(res > 0);
     }
