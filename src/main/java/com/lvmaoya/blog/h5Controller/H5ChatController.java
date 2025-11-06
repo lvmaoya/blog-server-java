@@ -25,6 +25,8 @@ import org.springframework.ai.chat.prompt.Prompt;
 import com.lvmaoya.blog.service.rag.ZhipuEmbeddingService;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.core.env.Environment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,6 +48,8 @@ import java.util.concurrent.ConcurrentMap;
 @RestController
 @RequestMapping("/h5")
 public class H5ChatController {
+
+    private static final Logger log = LoggerFactory.getLogger(H5ChatController.class);
 
     @Resource
     private OpenAiChatModel chatModel;
@@ -100,7 +104,6 @@ public class H5ChatController {
             records = (List<ChatMessageRecord>) cached;
         } else {
             records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是一位乐于助人的助手"));
         }
 
         // 语义检索构建上下文（寒暄/泛问跳过检索）
@@ -124,21 +127,18 @@ public class H5ChatController {
         history.add(new SystemMessage(assistantPersonaPrompt(context)));
         for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
-                case "system" -> history.add(new SystemMessage(r.getContent()));
                 case "user" -> history.add(new UserMessage(r.getContent()));
                 case "assistant" -> history.add(new AssistantMessage(r.getContent()));
             }
         }
         history.add(new UserMessage(request.getMessage()));
         records.add(new ChatMessageRecord("user", request.getMessage()));
+        // 打印完整 Prompt 历史（系统 + 历史对话 + 当前用户消息）
+        logPromptHistory(history);
 
         try {
             ChatResponse chatResponse = chatModel.call(new Prompt(history));
             String answer = chatResponse.getResult().getOutput().getContent();
-            String links = buildLinksFromHits(validHits);
-            if (!links.isBlank()) {
-                answer = answer + "\n\n" + links;
-            }
             history.add(new AssistantMessage(answer));
             records.add(new ChatMessageRecord("assistant", answer));
             List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
@@ -177,7 +177,6 @@ public class H5ChatController {
             records = (List<ChatMessageRecord>) cached;
         } else {
             records = new ArrayList<>();
-            records.add(new ChatMessageRecord("system", "你是 lvmaoya 的小助理。只回答与本站内容相关的问题；若没有相关资料请说明无法回答，不要编造。回答精炼。"));
         }
 
         // 语义检索构建上下文（寒暄/泛问跳过检索）
@@ -199,13 +198,14 @@ public class H5ChatController {
         history.add(new SystemMessage(assistantPersonaPrompt(context)));
         for (ChatMessageRecord r : carriedRecords) {
             switch (r.getRole()) {
-                case "system" -> history.add(new SystemMessage(r.getContent()));
                 case "user" -> history.add(new UserMessage(r.getContent()));
                 case "assistant" -> history.add(new AssistantMessage(r.getContent()));
             }
         }
         history.add(new UserMessage(request.getMessage()));
         records.add(new ChatMessageRecord("user", request.getMessage()));
+        // 打印完整 Prompt 历史（系统 + 历史对话 + 当前用户消息）
+        logPromptHistory(history);
 
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         StringBuilder answerBuilder = new StringBuilder();
@@ -229,12 +229,6 @@ public class H5ChatController {
                     },
                     () -> {
                         String fullAnswer = answerBuilder.toString();
-                        String links = buildLinksFromHits(validHits);
-                        String extra = (links.isBlank() ? "" : ("\n\n" + links));
-                        if (!extra.isBlank()) {
-                            try { emitter.send(SseEmitter.event().name("message").data(extra)); } catch (Exception ignored) {}
-                            fullAnswer = fullAnswer + extra;
-                        }
                         history.add(new AssistantMessage(fullAnswer));
                         records.add(new ChatMessageRecord("assistant", fullAnswer));
                         List<ChatMessageRecord> trimmed = limitHistory(records, MAX_CARRIED_HISTORY);
@@ -275,40 +269,23 @@ public class H5ChatController {
 
     private String buildContextFromHits(List<SearchHit> hits) {
         if (hits == null || hits.isEmpty()) return "(未检索到相关资料)";
+        String base = siteBaseUrl();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < hits.size(); i++) {
             SearchHit h = hits.get(i);
             sb.append("[片段").append(i + 1).append("] 标题: ")
-                    .append(h.title == null ? "" : h.title)
-                    .append("\n内容预览: ")
-                    .append(h.contentPreview == null ? "" : h.contentPreview)
-                    .append("\n——\n");
-        }
-        return sb.toString();
-    }
-
-    private String buildLinksFromHits(List<SearchHit> hits) {
-        if (hits == null || hits.isEmpty()) return "";
-        String base = siteBaseUrl();
-        StringBuilder sb = new StringBuilder("相关文章链接：\n");
-        int count = 0;
-        java.util.Set<Long> seen = new java.util.HashSet<>();
-        for (SearchHit h : hits) {
-            if (h == null || h.blogId == null) continue;
-            if (h.score == null || h.score < MIN_LINK_SCORE) continue; // 低相关不追加链接
-            if (seen.contains(h.blogId)) continue;
-            seen.add(h.blogId);
-            sb.append("- ")
-              .append(h.title == null ? "未命名文章" : h.title)
-              .append(" (")
+              .append(h.title == null ? "" : h.title)
+              .append("\n内容预览: ")
+              .append(h.contentPreview == null ? "" : h.contentPreview)
+              .append("\n文章ID: ")
+              .append(h.blogId == null ? "" : String.valueOf(h.blogId))
+              .append("\n链接: ")
               .append(base)
               .append("/detail/")
-              .append(h.blogId)
-              .append(")\n");
-            count++;
-            if (count >= MAX_LINKS) break;
+              .append(h.blogId == null ? "" : String.valueOf(h.blogId))
+              .append("\n——\n");
         }
-        return count == 0 ? "" : sb.toString();
+        return sb.toString();
     }
 
     /**
@@ -339,7 +316,7 @@ public class H5ChatController {
      */
     private String assistantPersonaPrompt(String context) {
         StringBuilder sb = new StringBuilder();
-        sb.append("你是 lvmaoya （https://lvmaoya.cn/）的智能助手。\n")
+        sb.append("你是 lvmaoya 的智能助手。\n")
           .append("【网站简介】\n")
           .append("这是一个个人博客与作品展示网站，内容涉及：\n")
           .append("- Web 开发、AI、数据分析、设计相关的原创内容；\n")
@@ -366,5 +343,35 @@ public class H5ChatController {
           .append("严格依据下方资料作答，若资料不足请直接说明无法回答，不要编造。以下是相关资料：\n")
           .append(context == null || context.isBlank() ? "(未检索到相关资料)" : context);
         return sb.toString();
+    }
+
+    /**
+     * 调试辅助：打印当前请求携带的完整 Prompt 历史（系统/用户/助手）。
+     */
+    private void logPromptHistory(List<Message> history) {
+        if (history == null || history.isEmpty()) {
+            log.info("携带的 Prompt 历史为空");
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("携带的 Prompt 历史：\n");
+        int idx = 1;
+        for (Message m : history) {
+            try {
+                sb.append(idx++)
+                  .append(". ")
+                  .append(m.getMessageType())
+                  .append(": ")
+                  .append(m.getContent())
+                  .append("\n");
+            } catch (Exception e) {
+                sb.append(idx++)
+                  .append(". ")
+                  .append("<消息打印失败: ")
+                  .append(e.getMessage())
+                  .append(">\n");
+            }
+        }
+        log.info(sb.toString());
     }
 }
