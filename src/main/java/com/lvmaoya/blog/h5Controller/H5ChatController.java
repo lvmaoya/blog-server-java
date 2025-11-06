@@ -136,12 +136,8 @@ public class H5ChatController {
             ChatResponse chatResponse = chatModel.call(new Prompt(history));
             String answer = chatResponse.getResult().getOutput().getContent();
             String links = buildLinksFromHits(validHits);
-            String nav = buildNavHintsFromMessage(request.getMessage());
             if (!links.isBlank()) {
                 answer = answer + "\n\n" + links;
-            }
-            if (!nav.isBlank()) {
-                answer = answer + "\n\n" + nav;
             }
             history.add(new AssistantMessage(answer));
             records.add(new ChatMessageRecord("assistant", answer));
@@ -234,8 +230,7 @@ public class H5ChatController {
                     () -> {
                         String fullAnswer = answerBuilder.toString();
                         String links = buildLinksFromHits(validHits);
-                        String nav = buildNavHintsFromMessage(request.getMessage());
-                        String extra = (links.isBlank() ? "" : ("\n\n" + links)) + (nav.isBlank() ? "" : ("\n\n" + nav));
+                        String extra = (links.isBlank() ? "" : ("\n\n" + links));
                         if (!extra.isBlank()) {
                             try { emitter.send(SseEmitter.event().name("message").data(extra)); } catch (Exception ignored) {}
                             fullAnswer = fullAnswer + extra;
@@ -371,22 +366,5 @@ public class H5ChatController {
           .append("严格依据下方资料作答，若资料不足请直接说明无法回答，不要编造。以下是相关资料：\n")
           .append(context == null || context.isBlank() ? "(未检索到相关资料)" : context);
         return sb.toString();
-    }
-
-    /**
-     * 根据用户意图追加站点导航提示（作品/联系/关于/博客）。
-     */
-    private String buildNavHintsFromMessage(String msg) {
-        if (msg == null || msg.isBlank()) return "";
-        String m = msg.toLowerCase();
-        StringBuilder sb = new StringBuilder();
-        boolean any = false;
-
-        if (m.contains("作品") || m.contains("work")) { sb.append("你可以在作品展示查看： https://lvmaoya.cn/work\n"); any = true; }
-        if (m.contains("联系") || m.contains("contact") || m.contains("微信") || m.contains("邮箱")) { sb.append("联系方式在这里： mailto:1504734652@qq.com\n"); any = true; }
-        if (m.contains("关于") || m.contains("about") || m.contains("作者") || m.contains("你是谁")) { sb.append("关于我页面： https://lvmaoya.cn/about\n"); any = true; }
-        if (m.contains("博客") || m.contains("文章") || m.contains("blog")) { sb.append("博客文章入口： https://lvmaoya.cn/\n"); any = true; }
-
-        return any ? ("站点导航：\n" + sb.toString().trim()) : "";
     }
 }
