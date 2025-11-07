@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import com.lvmaoya.blog.service.rag.RagVectorIndexService;
 import org.springframework.context.ApplicationEventPublisher;
 import com.lvmaoya.blog.event.BlogSavedEvent;
+import com.lvmaoya.blog.event.BlogDeletedEvent;
 
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
@@ -88,6 +89,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     @Override
     public R removeById(String id) {
         blogMapper.deleteById(id);
+        try {
+            // 发布删除事件，在事务提交后异步清理向量索引
+            eventPublisher.publishEvent(new BlogDeletedEvent(Integer.valueOf(id)));
+        } catch (Exception ignored) {}
         return R.success(true);
     }
 

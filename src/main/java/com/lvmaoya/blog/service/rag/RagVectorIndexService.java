@@ -419,6 +419,32 @@ public class RagVectorIndexService {
     }
 
     /**
+     * 删除指定博客的向量索引
+     */
+    public void deleteBlogVectors(Long blogId) {
+        if (blogId == null) {
+            log.warn("Attempted to delete vectors with null blogId");
+            return;
+        }
+        try {
+            createOrLoadCollection();
+        } catch (Exception e) {
+            // 集合不存在也可以直接尝试删除，忽略加载错误
+            log.debug("createOrLoadCollection failed before delete: {}", e.getMessage());
+        }
+        String coll = collectionName();
+        try {
+            milvusClient.delete(DeleteReq.builder()
+                    .collectionName(coll)
+                    .filter("blog_id == " + blogId)
+                    .build());
+            log.info("Deleted vectors for blog ID: {}", blogId);
+        } catch (Exception e) {
+            log.warn("Failed to delete vectors for blog {}: {}", blogId, e.getMessage());
+        }
+    }
+
+    /**
      * 批量插入向量数据
      */
     private void insertBatch(String collectionName,

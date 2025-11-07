@@ -2,6 +2,8 @@ package com.lvmaoya.blog.listener;
 
 import com.lvmaoya.blog.event.BlogSavedEvent;
 import com.lvmaoya.blog.service.AsyncBlogService;
+import com.lvmaoya.blog.event.BlogDeletedEvent;
+import com.lvmaoya.blog.service.rag.RagVectorIndexService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,8 @@ public class BlogEventListener {
 
     @Resource
     private AsyncBlogService asyncBlogService;
+    @Resource
+    private RagVectorIndexService ragVectorIndexService;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async("taskExecutor")
@@ -36,6 +40,18 @@ public class BlogEventListener {
             }
         } catch (Exception e) {
             log.error("异步摘要生成失败，blogId={}", event != null ? event.getBlogId() : null, e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Async("taskExecutor")
+    public void onBlogDeleted(BlogDeletedEvent event) {
+        try {
+            if (event == null) return;
+            log.info("事务已提交，开始异步删除向量索引，blogId={}", event.getBlogId());
+            ragVectorIndexService.deleteBlogVectors(event.getBlogId().longValue());
+        } catch (Exception e) {
+            log.error("异步删除向量索引失败，blogId={}", event != null ? event.getBlogId() : null, e);
         }
     }
 }
