@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.lvmaoya.blog.service.rag.RagVectorIndexService;
+import org.springframework.context.ApplicationEventPublisher;
+import com.lvmaoya.blog.event.BlogSavedEvent;
 
 @Service
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements BlogService {
@@ -47,6 +49,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
     private AsyncBlogService asyncBlogService;
     @Resource
     private RagVectorIndexService ragVectorIndexService;
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
     @Override
     public R blogList(BlogListSearchParams params) {
 
@@ -108,13 +112,8 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements Bl
             blogContent.setId(id);
             res = blogContentMapper.updateById(blogContent);
         }
-        // 异步生成摘要
-        // Spring的@Async是基于代理实现的，同一个类内部的方法调用不会经过代理，导致异步失效。
-        if (!blogVo.getKeepDesc()) {
-            asyncBlogService.updateBlog(blog.getId());
-            // 新增/更新文章后，异步重建该文章的向量索引（增量）
-            asyncBlogService.upsertRagIndex(blog.getId().longValue());
-        }
+        // 发布事件：在事务提交后由监听器异步处理（摘要生成与向量索引重建）
+        eventPublisher.publishEvent(new BlogSavedEvent(blog.getId(), Boolean.TRUE.equals(blogVo.getKeepDesc())));
         return R.success(res > 0);
     }
     @Transactional
