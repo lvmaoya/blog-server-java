@@ -1,18 +1,17 @@
 package com.lvmaoya.blog.handler.exception;
 
-import com.lvmaoya.blog.domain.vo.R;
+import com.lvmaoya.blog.common.pojo.R;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.NoHandlerFoundException;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
-
 import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
 import java.security.SignatureException;
@@ -20,6 +19,20 @@ import java.security.SignatureException;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public R handleValidationExceptions(MethodArgumentNotValidException ex, HttpServletResponse response) {
+        log.warn("参数校验失败: {}", ex.getMessage());
+
+        // 提取第一个字段错误信息（不包含字段名）
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .findFirst() // 获取第一个错误
+                .map(FieldError::getDefaultMessage) // 只提取默认消息
+                .orElse("参数校验失败");
+
+        response.setStatus(400);
+        return R.error(400, errorMessage); // 直接返回纯净的错误消息
+    }
 
     /**
      * 处理认证失败异常（如用户名密码错误）
@@ -67,11 +80,18 @@ public class GlobalExceptionHandler {
         return R.error(400, e.getMessage());
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Object handleHttpMessageNotReadableException(HttpMessageNotReadableException e, HttpServletResponse response) {
+        log.error("HttpMessageNotReadableException occurred: ", e);
+        response.setStatus(400);
+        return R.error(400, e.getMessage());
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public Object handleRuntimeException(RuntimeException e, HttpServletResponse response) {
         log.error("RuntimeException occurred: ", e);
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        return e.getMessage();
+        return R.error(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
     }
 
 
@@ -96,17 +116,6 @@ public class GlobalExceptionHandler {
         log.error("General Exception occurred: ", e);
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         return e.getMessage();
-    }
-
-    /**
-     * 处理404类异常（接口或静态资源不存在）
-     */
-    @ExceptionHandler({NoHandlerFoundException.class, NoResourceFoundException.class})
-    public R<Void> handleNotFound(Exception e, HttpServletRequest request, HttpServletResponse response) {
-        String uri = request.getRequestURI();
-        log.warn("Not Found: {} - {}", uri, e.getMessage());
-        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        return R.error(HttpServletResponse.SC_NOT_FOUND, "接口不存在: " + uri);
     }
 
     @ExceptionHandler(AuthorizationDeniedException.class)

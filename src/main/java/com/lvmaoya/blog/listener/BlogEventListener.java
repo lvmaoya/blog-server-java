@@ -1,9 +1,9 @@
 package com.lvmaoya.blog.listener;
 
 import com.lvmaoya.blog.event.BlogSavedEvent;
-import com.lvmaoya.blog.service.AsyncBlogService;
+import com.lvmaoya.blog.blog.service.AsyncBlogService;
 import com.lvmaoya.blog.event.BlogDeletedEvent;
-import com.lvmaoya.blog.service.rag.RagVectorIndexService;
+import com.lvmaoya.blog.chat.service.RagVectorIndexService;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

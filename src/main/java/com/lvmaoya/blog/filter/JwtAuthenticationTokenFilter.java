@@ -1,7 +1,8 @@
 package com.lvmaoya.blog.filter;
 
-import com.lvmaoya.blog.domain.entity.CustomUserDetails;
-import com.lvmaoya.blog.domain.vo.LoginUserVo;
+import com.lvmaoya.blog.auth.entity.CustomUserDetails;
+import com.lvmaoya.blog.user.entity.User;
+import com.lvmaoya.blog.user.mapper.UserMapper;
 import com.lvmaoya.blog.utils.JwtUtil;
 import com.lvmaoya.blog.utils.RedisCacheUtil;
 import com.lvmaoya.blog.utils.WebUtil;
@@ -23,9 +24,11 @@ import java.util.Objects;
 @Component
 public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
 
-
     @Resource
     private RedisCacheUtil redisCacheUtil;
+
+    @Resource
+    private UserMapper userMapper;
 
     public JwtAuthenticationTokenFilter(RedisCacheUtil redisCacheUtil) {
         this.redisCacheUtil = redisCacheUtil;
@@ -55,22 +58,31 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         String userId = claims.getSubject();
 
 
-        // 从redis中获取用户
-        CustomUserDetails customUserDetails = (CustomUserDetails) redisCacheUtil.get("blogLogin" + userId);
+        try {
+            // 数据库校验
+            User user = userMapper.selectById(userId);
+            if (user == null || user.getDeleted() == 1) {
+                // 账号不存在 / 已逻辑删除 / 已禁用
+                WebUtil.renderUnauthorized(response);
+                return;
+            }
+            // 从redis中获取用户 如果转换失败就可以提示重新登录
+            CustomUserDetails customUserDetails = (CustomUserDetails) redisCacheUtil.get("blogLogin" + userId);
 
-        System.out.println(customUserDetails.getUsername());
+            // 如何没有这个用户，说明登录过期，提示重新登录
+            if(Objects.isNull(customUserDetails)){
+                WebUtil.renderUnauthorized(response);
+                // token 超时、非法
+                return;
+            }
 
-        // 如何没有这个用户，说明登录过期，提示重新登录
-        if(Objects.isNull(customUserDetails)){
-           WebUtil.renderUnauthorized(response);
-            // token 超时、非法
-            return;
+            //存入SecurityContextHolder中
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // 放行
+            filterChain.doFilter(request, response);
+        }catch (Exception e){
+            WebUtil.renderUnauthorized(response);
         }
-
-        //存入SecurityContextHolder中
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        // 放行
-        filterChain.doFilter(request, response);
     }
 }

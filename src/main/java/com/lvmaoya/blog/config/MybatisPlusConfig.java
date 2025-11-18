@@ -9,7 +9,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@MapperScan("com.lvmaoya.blog.mapper")
+@MapperScan({
+        "com.lvmaoya.blog.blog.mapper",
+        "com.lvmaoya.blog.user.mapper",
+        "com.lvmaoya.blog.role.mapper",
+        "com.lvmaoya.blog.comment.mapper",
+        "com.lvmaoya.blog.category.mapper",
+        "com.lvmaoya.blog.todo.mapper",
+        "com.lvmaoya.blog.permission.mapper"
+})
 public class MybatisPlusConfig {
 
     /**

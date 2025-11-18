@@ -4,15 +4,12 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lvmaoya.blog.common.pojo.R;
 import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * @author 35238
- * @date 2023/7/22 0022 21:19
- */
 @Slf4j
 public class WebUtil {
     /**
@@ -35,12 +32,15 @@ public class WebUtil {
             e.printStackTrace();
         }
     }
+
     public static void renderUnauthorized(HttpServletResponse response) {
+        R<Void> r = R.error(HttpServletResponse.SC_UNAUTHORIZED, "Token无效或已过期，请重新登录");
+
         try {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.setCharacterEncoding("utf-8");
-            response.getWriter().print("{\"error\":\"Unauthorized\",\"message\":\"User is not logged in\"}");
+            response.getWriter().print(new ObjectMapper().writeValueAsString(r));
         } catch (IOException e) {
             log.error("Error occurred while rendering unauthorized message: ", e);
         }
@@ -63,8 +63,5 @@ public class WebUtil {
         response.setHeader("content-type",mimeType);
         String fname= URLEncoder.encode(filename,"UTF-8");
         response.setHeader("Content-disposition","attachment; filename="+fname);
-
-//        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-//        response.setCharacterEncoding("utf-8");
     }
 }

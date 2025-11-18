@@ -1,7 +1,7 @@
 package com.lvmaoya.blog.handler.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lvmaoya.blog.domain.vo.R;
+import com.lvmaoya.blog.common.pojo.R;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;

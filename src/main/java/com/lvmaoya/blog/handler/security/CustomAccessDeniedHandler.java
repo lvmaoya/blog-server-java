@@ -1,13 +1,10 @@
 package com.lvmaoya.blog.handler.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lvmaoya.blog.domain.vo.R;
-import com.lvmaoya.blog.utils.JsonUtil;
-import jakarta.servlet.ServletException;
+import com.lvmaoya.blog.common.pojo.R;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
