@@ -6,9 +6,9 @@ logging:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://101.43.54.84:3306/personal_web_v2
-    username: personal_web_v2
-    password: wfA4kaAzPX8bn8Gy
+    url: jdbc:mysql://xxxxxx:xxxx/xxxxxx
+    username: xxxxxx
+    password: xxxxxx
     hikari:
       max-lifetime: 120000
   servlet:
@@ -17,12 +17,12 @@ spring:
       max-request-size: 5MB
   data:
     redis:
-      host: 101.43.54.84
-      port: 6379
-      password: king.sun1
+      host: xxxxxx
+      port: xxxx
+      password: xxxxxx
   ai:
     openai:
-      api-key: sk-7f53157c361d497e9617d2bbfd836d5c
+      api-key: xxxxxx
       base-url: https://api.deepseek.com
       chat:
         options:
@@ -30,14 +30,14 @@ spring:
   mail:
     host: smtp.qq.com
     protocol: smtp
-    username: 1504734652@qq.com
-    password: kywytppoyefrbadh
+    username: xxxxxx
+    password: xxxxxx
     default-encoding: utf-8
     ssl:
       enabled: true
 
 zhipu:
-  api-key: 25947cfd4e734874a93d84bf00fad6a5.UpkjTQY9dJTeuaEe
+  api-key: xxxxxx
   embedding:
     base-url: https://open.bigmodel.cn/api/paas/v3/embeddings
     model: embedding-3
@@ -53,15 +53,15 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 qiniu:
-  access-key: kcZ7Yit7IS89-ZGZ6_KhiFuXVyVa-Rp1PBXpoOdL
-  secret-key: dAMRUy71Y0_5nYBaC8pYzIu4UYSKR4SHBUYLeeQq
+  access-key: xxxxxx
+  secret-key: xxxxxx
   bucket: lvmaoya
   domain: https://qn.lvmaoya.cn
   folder: blog-new
 
 rag:
   milvus:
-    host: 101.43.54.84
+    host: xxxxxx
     port: 19530
   collection:
     name: blog_chunks

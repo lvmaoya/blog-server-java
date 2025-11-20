@@ -31,3 +31,5 @@ build/
 
 ### VS Code ###
 src/main/resources/embedding/
+
+src/main/resources/application-product.yml
