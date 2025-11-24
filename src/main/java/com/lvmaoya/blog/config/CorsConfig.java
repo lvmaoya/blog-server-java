@@ -6,6 +6,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
+import java.util.Arrays;
+
 @Configuration
 public class CorsConfig {
 
@@ -14,7 +16,10 @@ public class CorsConfig {
         // 创建CorsConfiguration对象
         CorsConfiguration config = new CorsConfiguration();
         // 允许所有来源（根据需求可以设置为具体的域名）
-        config.addAllowedOriginPattern("*");
+        config.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:3001",
+                "http://lvmaoya.cn:8520"
+        ));
         // 允许所有请求头
         config.addAllowedHeader("*");
         // 允许所有HTTP方法（GET、POST、PUT、DELETE等）
