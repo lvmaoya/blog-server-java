@@ -16,7 +16,8 @@ public class CorsConfig {
         // 创建CorsConfiguration对象
         CorsConfiguration config = new CorsConfiguration();
         // 允许所有来源（根据需求可以设置为具体的域名）
-        config.setAllowedOriginPatterns(Arrays.asList(
+        config.setAllowedOrigins(Arrays.asList(
+                "https://lvmaoya.cn",
                 "http://localhost:3001",
                 "http://lvmaoya.cn:8520"
         ));
