@@ -51,7 +51,8 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
 
           # ⭐ 关键修复：禁用 host key 校验
-          fingerprint: "disable"
+          fingerprint: ""
+          use_insecure_cipher: true
 
           # rsync 模式，提高速度
           rm: false
