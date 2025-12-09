@@ -3,8 +3,6 @@ name: Deploy API
 on:
   push:
     branches: ["main"]
-    paths:
-      - "blog-api/**"   # 只要修改 API 目录就触发
 
 jobs:
   deploy-api:
