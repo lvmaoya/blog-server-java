@@ -49,11 +49,15 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          fingerprint: "disable"   # 👈 跳过 HostKey 检查
+
+          # ⭐ 关键修复：彻底禁用 Host Key 校验
+          host_key: "disable"
+
           script: |
             rsync -avz --partial --inplace -e "ssh -p ${{ secrets.SERVER_PORT }}" \
             target/app.jar \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/personal_web/docker-deploy/projects/blog-api/app.jar
+
 
 
 
