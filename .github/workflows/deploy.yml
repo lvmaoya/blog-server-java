@@ -48,10 +48,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "target/*.jar"
+          source: "target/blog-1.0.1.jar"
           target: "/www/wwwroot/personal_web/docker-deploy/projects/blog-api/"
-          strip_components: 1   # 避免打包多余目录
-
 
 
       - name: Restart API Container
