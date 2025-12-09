@@ -42,15 +42,15 @@ jobs:
               echo "No existing app.jar found, skipping backup."
             fi
 
-      - name: Rsync Deploy
-        uses: burnett01/rsync-deployments@v0.1.2
-        with:
-          switches: -avz --delete
-          path: target/app.jar
-          remote_path: /www/wwwroot/personal_web/docker-deploy/projects/blog-api/
-          remote_host: ${{ secrets.SERVER_HOST }}
-          remote_user: ${{ secrets.SERVER_USER }}
-          remote_key: ${{ secrets.SERVER_SSH_KEY }}
+      - name: 🚀 Deploy with rsync (fast)
+        uses: easingthemes/ssh-deploy@v5.0.3
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          ARGS: "-avz --delete"
+          SOURCE: "target/app.jar"
+          REMOTE_HOST: ${{ secrets.SERVER_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_USER }}
+          TARGET: "/www/wwwroot/personal_web/docker-deploy/projects/blog-api/"
 
       - name: Restart API Container
         uses: appleboy/ssh-action@v0.1.10
