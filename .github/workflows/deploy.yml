@@ -26,7 +26,7 @@ jobs:
 
       - name: Build Spring Boot Project
         run: ./mvnw -q -DskipTests package
-        working-directory: blog-api
+        working-directory: blog-server-java/blog-api
 
       # ============================
       # 3. 备份服务器上的 app.jar
@@ -63,7 +63,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "blog-api/target/*.jar"
+          source: "blog-server-java/blog-api/target/*.jar"
           target: "/www/wwwroot/personal_web/docker-deploy/projects/blog-api/"
 
       # ============================
