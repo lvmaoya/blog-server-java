@@ -51,7 +51,9 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             mkdir -p /www/wwwroot/personal_web/docker-deploy/projects/blog-api/
-            rsync -avz --progress ~/work/blog-server-java/blog-server-java/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/personal_web/docker-deploy/projects/blog-api/
+            rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ${{ secrets.SERVER_SSH_KEY }}" \
+              $GITHUB_WORKSPACE/target/*.jar \
+              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/personal_web/docker-deploy/projects/blog-api/
 
 
       - name: Restart API Container
