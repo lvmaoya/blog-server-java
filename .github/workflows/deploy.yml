@@ -42,21 +42,26 @@ jobs:
               echo "No existing app.jar found, skipping backup."
             fi
 
-      - name: Upload via rsync (fast)
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Upload app.jar fast with rsync
+        uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
 
-          # ⭐ 关键修复：彻底禁用 Host Key 校验
-          host_key: "disable"
+          # ⭐ 关键修复：禁用 host key 校验
+          fingerprint: "disable"
 
-          script: |
-            rsync -avz --partial --inplace -e "ssh -p ${{ secrets.SERVER_PORT }}" \
-            target/app.jar \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/www/wwwroot/personal_web/docker-deploy/projects/blog-api/app.jar
+          # rsync 模式，提高速度
+          rm: false
+          source: "target/app.jar"
+          target: "/www/wwwroot/personal_web/docker-deploy/projects/blog-api/"
+
+          # 启用 rsync，只传 app.jar，不压缩项目
+          overwrite: true
+          strip_components: 0
+
 
 
 
