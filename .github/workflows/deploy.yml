@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
-          source: "target/blog-1.0.1.jar"
+          source: "target/app.jar"
           target: "/www/wwwroot/personal_web/docker-deploy/projects/blog-api/"
 
 
