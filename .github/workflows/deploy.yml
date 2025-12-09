@@ -25,9 +25,8 @@ jobs:
           java-version: "21"
 
       - name: Build Spring Boot Project
-        run: |
-          cd blog-api
-          ./mvnw -q -DskipTests package
+        run: ./mvnw -q -DskipTests package
+        working-directory: blog-api
 
       # ============================
       # 3. 备份服务器上的 app.jar
