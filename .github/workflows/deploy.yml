@@ -1,0 +1,86 @@
+name: Deploy API
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "blog-api/**"   # 只要修改 API 目录就触发
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ============================
+      # 1. 拉取代码
+      # ============================
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # ============================
+      # 2. 构建 Spring Boot JAR（跳过测试）
+      # ============================
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Build Spring Boot Project
+        run: |
+          cd blog-api
+          ./mvnw -q -DskipTests package
+
+      # ============================
+      # 3. 备份服务器上的 app.jar
+      # ============================
+      - name: Backup app.jar on server
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            set -e
+
+            PROJECT_DIR="/www/wwwroot/personal_web/docker-deploy/projects/blog-api"
+            BACKUP_DIR="$PROJECT_DIR/backups"
+            mkdir -p "$BACKUP_DIR"
+
+            if [ -f "$PROJECT_DIR/app.jar" ]; then
+              TS=$(date +%Y%m%d%H%M%S)
+              cp "$PROJECT_DIR/app.jar" "$BACKUP_DIR/app-$TS.jar"
+              echo "Backup created: $BACKUP_DIR/app-$TS.jar"
+            else
+              echo "No existing app.jar found, skipping backup."
+            fi
+
+      # ============================
+      # 4. 上传 JAR 到服务器
+      # ============================
+      - name: Upload API JAR
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: "blog-api/target/*.jar"
+          target: "/www/wwwroot/personal_web/docker-deploy/projects/blog-api/"
+
+      # ============================
+      # 5. 重启 API Docker 容器
+      # ============================
+      - name: Restart API Container
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            set -e
+            cd /www/wwwroot/personal_web/docker-deploy/projects
+            docker compose restart api
+            echo "API container restarted successfully"
