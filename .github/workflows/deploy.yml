@@ -30,7 +30,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             set -e
-            PROJECT_DIR="/www/wwwroot/personal_web/docker-deploy/projects/blog-api"
+            PROJECT_DIR="/var/www/docker-deploy/projects/blog-api"
             BACKUP_DIR="$PROJECT_DIR/backups"
             mkdir -p "$BACKUP_DIR"
 
@@ -50,7 +50,7 @@ jobs:
           SOURCE: "target/app.jar"
           REMOTE_HOST: ${{ secrets.SERVER_HOST }}
           REMOTE_USER: ${{ secrets.SERVER_USER }}
-          TARGET: "/www/wwwroot/personal_web/docker-deploy/projects/blog-api/"
+          TARGET: "/var/www/docker-deploy/projects/blog-api/"
 
       - name: Restart API Container
         uses: appleboy/ssh-action@v0.1.10
@@ -61,6 +61,6 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             set -e
-            cd /www/wwwroot/personal_web/docker-deploy/projects
+            cd /var/www/docker-deploy/projects
             docker compose restart api
             echo "API container restarted successfully"
