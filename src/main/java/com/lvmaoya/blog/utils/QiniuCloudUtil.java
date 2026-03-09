@@ -45,8 +45,8 @@ public class QiniuCloudUtil {
         Auth auth = Auth.create(accessKey, secretKey);
         String upToken = auth.uploadToken(bucket);
 
-        // 构造文件存储路径（如：folder/original_filename.ext）
-        String fileName = folder + "/" + file.getOriginalFilename();
+        // 构造文件存储路径（如：folder/timestamp_original_filename.ext）
+        String fileName = folder + "/" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
         String fileUrl = domain + "/" + fileName; // 直接拼接访问路径
 
         try {

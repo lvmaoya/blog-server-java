@@ -70,6 +70,19 @@ public class BlogService extends ServiceImpl<BlogMapper, Blog> {
         }
         return R.success(blogVo);
     }
+    public R getPublicBlogById(Integer id) {
+        BlogVo blogVo = blogMapper.selectBlogWithContentById(id);
+        if (blogVo == null) {
+            return R.error(400,"博客不存在");
+        }
+        if (blogVo.getStatus() == null || blogVo.getStatus() != 1) {
+            return R.error(400,"博客不存在");
+        }
+        if (blogVo.getCategory() != null) {
+            blogVo.setCategoryId(blogVo.getCategory().getId());//解决 @Results 映射配置中，categoryId 和 category.id 都映射到了同一个数据库列 category_id，这会导致映射冲突：
+        }
+        return R.success(blogVo);
+    }
 
     public R removeById(String id) {
         blogMapper.deleteById(id);
